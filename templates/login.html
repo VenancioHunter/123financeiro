@@ -1,32 +1,53 @@
-<!-- templates/login.html -->
 {% extends "layout.html" %}
 
 {% block title %}Login{% endblock %}
 
 {% block content %}
-
-<div class="py-4" align="center">
-    <img class="rounded-circle" src="../static/img/logo.webp" style="max-width: 200px;" />
-</div>
-<div class="card" style="border: none;">
-<div class="card-header ">
-    <h2 class="text-center" style="color: #124453; font-weight: bold;">LOGIN</h2>
-</div>
-<div class="card-body py-4">
-    <form method="POST" action="{{ url_for('login') }}">
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input class="form-control" type="email" id="email" name="email" required>
+<section class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-hero">
+      <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Logo 123" />
+      <span class="eyebrow">Acesso seguro</span>
+      <h1 style="margin: 0 0 12px; font-size: 2.35rem; font-weight: 800;">
+        Central financeira da operacao.
+      </h1>
+      <p style="color: rgba(255,255,255,0.84); max-width: 420px;">
+        Entre para acompanhar caixa, lancamentos, ordens recebidas e indicadores
+        financeiros em um unico painel.
+      </p>
+      <div class="hero-note-grid">
+        <div class="hero-note">
+          <span class="eyebrow">Fluxo</span>
+          <strong>Caixa atual e projetado</strong>
         </div>
-       
-        <div class="form-group">
-            <label for="password">Senha:</label>
-            <input class="form-control" type="password" id="password" name="password" required>
+        <div class="hero-note">
+          <span class="eyebrow">Gestao</span>
+          <strong>Livro caixa e ocorrencias</strong>
+        </div>
+        <div class="hero-note">
+          <span class="eyebrow">Operacao</span>
+          <strong>OS e recebimentos</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-panel">
+      <span class="eyebrow">Identificacao</span>
+      <h2>Entrar no sistema</h2>
+      <p>Use seu email e senha cadastrados para acessar o ambiente financeiro.</p>
+
+      <form method="POST" action="{{ url_for('login') }}" class="quick-form">
+        <div>
+          <label for="email">Email</label>
+          <input class="form-control" type="email" id="email" name="email" required />
         </div>
         <div>
-        <button class="btn btn-primary" type="submit" style="width: 100%;">Login</button>
+          <label for="password">Senha</label>
+          <input class="form-control" type="password" id="password" name="password" required />
         </div>
-    </form>
-</div>
-</div>
+        <button class="btn btn-primary" type="submit">Acessar painel</button>
+      </form>
+    </div>
+  </div>
+</section>
 {% endblock %}

@@ -1,0 +1,232 @@
+{% extends "layout.html" %}
+
+{% block title %}Fluxo de Caixa{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <span class="eyebrow">Fluxo de caixa</span>
+  <h1>Do realizado ao projetado, com leitura diaria para tomada de decisao.</h1>
+  <p>
+    Consolide o que ja passou no caixa e acompanhe o que ainda pode impactar
+    o saldo nos proximos dias.
+  </p>
+  <div class="page-hero-actions">
+    <a class="btn btn-light" href="{{ url_for('dashboard', ano=ano, mes=mes) }}">
+      Voltar ao dashboard
+    </a>
+    <a class="btn btn-soft" href="{{ url_for('lancamentos', ano=ano, mes=mes) }}">
+      Abrir livro caixa
+    </a>
+  </div>
+</section>
+
+<section class="surface-card" style="margin-bottom: 20px;">
+  <form class="filter-bar" method="get" action="{{ url_for('fluxo_caixa') }}">
+    <div class="field">
+      <label for="mes">Mes de leitura</label>
+      <select class="form-select" id="mes" name="mes">
+        {% for numero_mes, nome_mes in meses.items() %}
+        <option value="{{ numero_mes }}" {% if numero_mes == mes %}selected{% endif %}>
+          {{ nome_mes }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="ano">Ano</label>
+      <select class="form-select" id="ano" name="ano">
+        {% for ano_opcao in anos %}
+        <option value="{{ ano_opcao }}" {% if ano_opcao == ano %}selected{% endif %}>
+          {{ ano_opcao }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <button class="btn btn-primary w-100" type="submit">Atualizar fluxo</button>
+    </div>
+  </form>
+</section>
+
+<section class="kpi-grid">
+  <article class="kpi-card kpi-blue">
+    <span class="eyebrow">Saldo atual</span>
+    <div class="kpi-value">{{ saldo_atual_display }}</div>
+    <div class="kpi-support">Posicao consolidada do caixa.</div>
+  </article>
+  <article class="kpi-card kpi-green">
+    <span class="eyebrow">Entradas realizadas</span>
+    <div class="kpi-value">{{ summary.receita_display }}</div>
+    <div class="kpi-support">Entradas registradas em {{ month_name }}/{{ ano }}.</div>
+  </article>
+  <article class="kpi-card kpi-amber">
+    <span class="eyebrow">Saidas realizadas</span>
+    <div class="kpi-value">{{ summary.despesas_display }}</div>
+    <div class="kpi-support">Pagamentos efetivados no mes.</div>
+  </article>
+  <article class="kpi-card kpi-rose">
+    <span class="eyebrow">Saldo projetado</span>
+    <div class="kpi-value">{{ saldo_projetado_display }}</div>
+    <div class="kpi-support">Saldo atual mais pipeline previsto.</div>
+  </article>
+</section>
+
+<div class="split-layout">
+  <section class="stack-grid">
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Fluxo realizado</span>
+          <h3>Resumo diario do mes</h3>
+          <p>Saldo de abertura, movimentos do dia e fechamento por data.</p>
+        </div>
+      </div>
+      {% if summary.daily_rows %}
+      <div class="data-table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Saldo abertura</th>
+              <th>Entradas</th>
+              <th>Saidas</th>
+              <th>Saldo fechamento</th>
+              <th>Movimentos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in summary.daily_rows %}
+            <tr>
+              <td class="nowrap">{{ row.date_label }}</td>
+              <td>{{ row.opening_balance_display }}</td>
+              <td class="amount-positive">{{ row.inflow_display }}</td>
+              <td class="amount-negative">{{ row.outflow_display }}</td>
+              <td class="{% if row.closing_balance >= 0 %}amount-positive{% else %}amount-negative{% endif %}">
+                {{ row.closing_balance_display }}
+              </td>
+              <td>{{ row.transactions|length }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">Nao ha movimentos realizados para este periodo.</div>
+      {% endif %}
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Fluxo projetado</span>
+          <h3>Recebimentos e compromissos futuros</h3>
+          <p>Inclui programacoes pendentes e OS aguardando consolidacao.</p>
+        </div>
+      </div>
+      {% if projected_rows %}
+      <div class="data-table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Descricao</th>
+              <th>Origem</th>
+              <th>Destino</th>
+              <th>Impacto</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in projected_rows %}
+            <tr>
+              <td class="nowrap">{{ row.date_label }}</td>
+              <td>{{ row.kind }}</td>
+              <td>{{ row.description }}</td>
+              <td>{{ row.origin }}</td>
+              <td>{{ row.destination }}</td>
+              <td class="{% if row.is_positive %}amount-positive{% else %}amount-negative{% endif %}">
+                {{ row.signed_amount_display }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">Sem eventos projetados cadastrados para este mes.</div>
+      {% endif %}
+    </article>
+  </section>
+
+  <aside class="stack-grid">
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Posicao do mes</span>
+          <h3>Fechamento resumido</h3>
+        </div>
+      </div>
+      <div class="metric-list">
+        <div class="metric-row">
+          <strong>{{ summary.opening_balance_display }}</strong>
+          <span>Saldo inicial</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.closing_balance_display }}</strong>
+          <span>Saldo final do mes</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.transaction_count }}</strong>
+          <span>Movimentos realizados</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.average_ticket_display }}</strong>
+          <span>Ticket medio das entradas</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Categorias</span>
+          <h3>Saldo por grupo</h3>
+        </div>
+      </div>
+      {% if top_categories %}
+      <div class="trend-bars">
+        {% for item in top_categories %}
+        <div class="metric-row">
+          <strong>{{ item.name }}</strong>
+          <span>{{ item.credit_display }} de entradas | {{ item.debit_display }} de saidas</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">Sem categorias suficientes para leitura comparativa.</div>
+      {% endif %}
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Pendencias operacionais</span>
+          <h3>Recebiveis por tecnico</h3>
+        </div>
+      </div>
+      {% if pending_by_technician %}
+      <div class="trend-bars">
+        {% for item in pending_by_technician %}
+        <div class="metric-row">
+          <strong>{{ item.tecnico }}</strong>
+          <span>{{ item.quantidade }} OS | {{ item.total_display }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">Nao ha recebiveis pendentes para este painel.</div>
+      {% endif %}
+    </article>
+  </aside>
+</div>
+{% endblock %}

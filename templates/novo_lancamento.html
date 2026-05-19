@@ -1,168 +1,231 @@
-<!-- templates/login.html -->
-{% extends "layout.html" %}
+{% extends "layout.html" %} {% block title %}Novo Lançamento{% endblock %} {%
+block content %}
 
-{% block title %}HomePage{% endblock %}
+<style>
+  .page-title {
+    font-weight: 800;
+    color: #0d5590;
+    margin: 20px 0 5px;
+    text-align: center;
+  }
 
-{% block content %}
-<h2>Bem-vindo ao Dashboard</h2>
-<p>Você está logado como: {{ user_email }}</p>
-<link href="../static/css/dashboard.css" rel="stylesheet">
-<div>
-    <form id="lancamentoForm" method="post" action="/post_lancamento">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div style="width: 100%;">
-                    <Label style="font-size: small; font-weight: bold;">Tipo</Label>
-                    <div>
-                        <select class="form-select" name="typeTransaction" required>
-                            <option value="c">Receita</option>
-                            <option value="d">Despesa</option>
-                        </select>
-                    </div>
-                </div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="my-4">
-                    <label for="origem" style="font-size: small;">Origem</label>
-                    <select class="form-select" name="origem" required>
-                        {% for id in destinatarios %}
-                        <option value="{{destinatarios[id]}}">{{destinatarios[id]}}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="row">
-                    <div class="col">
-                        <Label style="font-size: small;">Valor (R$)</Label>
-                        <input class="form-control" name="amount" id="amount" required>
-                    </div>
-                    <div class="col">
-                        <Label style="font-size: small;">Data</Label>
-                        <input class="form-control" type="date" id="date" name="date" required>
-                    </div>
-                </div>
-                <div class="my-2">
-                    <Label style="font-size: small;">Categoria</Label>
-                    <select id="categoria" class="form-select" name="categoria" required>
-                        <option>Selecionar</option>
-                        <option value="pessoal">Pessoal</option>
-                        <option value="publicidade">Publicidade</option>
-                        <option value="escritório">Escritório</option>
-                        <option value="comissão">Comissão</option>
-                        <option class="transporte">Transporte</option>
-                    </select>
-                </div>
-    
-                <label for="especie" style="font-size: small;">Espécie</label>
-                <select id="especie" class="form-select" name="especie">
-                    <option value="">Selecione primeiro uma opção acima</option>
-                </select>
-                <div class="my-4">
-                    <label for="destinatario" style="font-size: small;">Destinatário</label>
-                    <select class="form-select" name="destinatario">
-                        <option selected value="">Selecionar</option>
-                        {% for id in destinatarios %}
-                        <option value="{{destinatarios[id]}}">{{destinatarios[id]}}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="row my-2">
-                    <div class="col">
-                        <Label style="font-size: small;">Descrição</Label>
-                        <input class="form-control" type="text" name="descricao">
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary mt-2" style="width: 100%;">Salvar</button>
-    
-            </div>
-        </div>
-    </form>
+  .page-subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 0.9rem;
+  }
+
+  .form-card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 30px;
+    max-width: 750px;
+    margin: 0 auto;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.08);
+  }
+
+  .form-label,
+  label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0d5590;
+    text-transform: uppercase;
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 0.9rem;
+    border: 1px solid #cfd6dd;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #0d5590;
+    box-shadow: 0 0 0 0.15rem rgba(13, 85, 144, 0.25);
+  }
+
+  .section-divider {
+    margin: 25px 0 15px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    background: #0d5590;
+    border: none;
+    transition: 0.2s;
+  }
+
+  .btn-submit:hover {
+    background: #083a63;
+    transform: translateY(-2px);
+  }
+</style>
+
+<h2 class="page-title">Novo Lançamento</h2>
+<p class="page-subtitle">Registrar receita ou despesa no sistema</p>
+
+<div class="form-card">
+  <form id="lancamentoForm" method="post" action="/post_lancamento">
+    <!-- TIPO -->
+    <div class="mb-3">
+      <label>Tipo</label>
+      <select class="form-select" name="typeTransaction" required>
+        <option value="c">Receita</option>
+        <option value="d">Despesa</option>
+      </select>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <!-- ORIGEM -->
+    <div class="mb-3">
+      <label>Origem</label>
+      <select class="form-select" name="origem" required>
+        {% for id in destinatarios %}
+        <option value="{{destinatarios[id]}}">{{destinatarios[id]}}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- VALOR / DATA -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label>Valor (R$)</label>
+        <input class="form-control" name="amount" id="amount" required />
+      </div>
+      <div class="col-md-6">
+        <label>Data</label>
+        <input
+          class="form-control"
+          type="date"
+          id="date"
+          name="date"
+          required
+        />
+      </div>
+    </div>
+
+    <!-- CATEGORIA -->
+    <div class="mb-3">
+      <label>Categoria</label>
+      <select id="categoria" class="form-select" name="categoria" required>
+        <option>Selecionar</option>
+        <option value="pessoal">Pessoal</option>
+        <option value="publicidade">Publicidade</option>
+        <option value="escritório">Escritório</option>
+        <option value="comissão">Comissão</option>
+        <option class="transporte">Transporte</option>
+      </select>
+    </div>
+
+    <!-- ESPÉCIE -->
+    <div class="mb-3">
+      <label>Espécie</label>
+      <select id="especie" class="form-select" name="especie">
+        <option value="">Selecione primeiro uma opção acima</option>
+      </select>
+    </div>
+
+    <!-- DESTINATÁRIO -->
+    <div class="mb-3">
+      <label>Destinatário</label>
+      <select class="form-select" name="destinatario">
+        <option selected value="">Selecionar</option>
+        {% for id in destinatarios %}
+        <option value="{{destinatarios[id]}}">{{destinatarios[id]}}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- DESCRIÇÃO -->
+    <div class="mb-4">
+      <label>Descrição</label>
+      <input class="form-control" type="text" name="descricao" />
+    </div>
+
+    <!-- BOTÃO -->
+    <button type="submit" class="btn btn-primary btn-submit">
+      Salvar Lançamento
+    </button>
+  </form>
 </div>
+
+<!-- === SCRIPTS ORIGINAIS (INALTERADOS) === -->
+
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+
 <script>
-    document.addEventListener('DOMContentLoaded', (event) => {
-        // Usando Luxon para lidar com o fuso horário
-        const DateTime = luxon.DateTime;
-
-        // Obtenha a data atual no fuso horário de São Paulo
-        const nowInSaoPaulo = DateTime.now().setZone('America/Sao_Paulo');
-
-        // Formate a data para 'YYYY-MM-DD'
-        const formattedDate = nowInSaoPaulo.toFormat('yyyy-MM-dd');
-
-        // Obtenha o elemento de entrada da data
-        const dateInput = document.getElementById('date');
-
-        // Defina o valor do campo de data para a data atual em São Paulo
-        dateInput.value = formattedDate;
-    });
+  document.addEventListener("DOMContentLoaded", () => {
+    const DateTime = luxon.DateTime;
+    document.getElementById("date").value = DateTime.now()
+      .setZone("America/Sao_Paulo")
+      .toFormat("yyyy-MM-dd");
+  });
 </script>
+
 <script>
-    const select1 = document.getElementById("categoria");
-    const select2 = document.getElementById("especie");
+  const select1 = document.getElementById("categoria");
+  const select2 = document.getElementById("especie");
 
-    // Objeto que mapeia as opções
-    const optionsMap = {
-        "pessoal": [
-            { value: "operacional", text: "Operacional" },
-            { value: "administrativo", text: "Administrativo" }
-        ],
-        "publicidade": [
-            { value: "google ads", text: "Google ads" },
-            { value: "meta", text: "meta" },
-            { value: "rádio", text: "Rário" },
-            { value: "TV", text: "TV" },
-        ],
-        "escritório": [
-            { value: "aluguel", text: "Aluguel" },
-            { value: "água", text: "Água" },
-            { value: "energia", text: "Energia" },
-            { value: "internet", text: "Internet" },
-            { value: "celular", text: "Celular" },
-            { value: "equipamentos", text: "Equipamentos" },
-        ],
-        "comissão": [
-            { value: "operacional", text: "Operacional" },
-            { value: "administrativa", text: "Administrativa" },
-        ],
-        "transporte": [
-            { value: "combustível", text: "Combustível" },
-            { value: "passagem", text: "Passagem" },
-        ]
-    };
+  const optionsMap = {
+    pessoal: [
+      { value: "operacional", text: "Operacional" },
+      { value: "administrativo", text: "Administrativo" },
+    ],
+    publicidade: [
+      { value: "google ads", text: "Google Ads" },
+      { value: "meta", text: "Meta" },
+      { value: "rádio", text: "Rádio" },
+      { value: "TV", text: "TV" },
+    ],
+    escritório: [
+      { value: "aluguel", text: "Aluguel" },
+      { value: "água", text: "Água" },
+      { value: "energia", text: "Energia" },
+      { value: "internet", text: "Internet" },
+      { value: "celular", text: "Celular" },
+      { value: "equipamentos", text: "Equipamentos" },
+    ],
+    comissão: [
+      { value: "operacional", text: "Operacional" },
+      { value: "administrativa", text: "Administrativa" },
+    ],
+    transporte: [
+      { value: "combustível", text: "Combustível" },
+      { value: "passagem", text: "Passagem" },
+    ],
+  };
 
-    // Função que atualiza o segundo select com base na seleção do primeiro
-    select1.addEventListener("change", function () {
-        const selectedValue = select1.value;
-
-        // Limpa o segundo select
-        select2.innerHTML = "<option value=''>Selecione uma opção</option>";
-
-        // Se houver uma opção válida no primeiro select
-        if (optionsMap[selectedValue]) {
-            // Adiciona as novas opções no segundo select
-            optionsMap[selectedValue].forEach(option => {
-                const newOption = document.createElement("option");
-                newOption.value = option.value;
-                newOption.text = option.text;
-                select2.appendChild(newOption);
-            });
-        }
-    });
-</script>
-<script>
-    // Função para formatar o valor
-    const inputValor = document.getElementById('amount');
-    inputValor.addEventListener('input', formatarValor);
-
-    function formatarValor() {
-        let valor = inputValor.value.replace(/\D/g, '');  // Remove tudo que não for dígito
-        const parteInteira = valor.slice(0, -2);
-        const parteDecimal = valor.slice(-2);
-        const parteInteiraFormatada = parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        inputValor.value = `${parteInteiraFormatada},${parteDecimal}`;
+  select1.addEventListener("change", () => {
+    select2.innerHTML = "<option value=''>Selecione uma opção</option>";
+    if (optionsMap[select1.value]) {
+      optionsMap[select1.value].forEach((opt) => {
+        const o = document.createElement("option");
+        o.value = opt.value;
+        o.text = opt.text;
+        select2.appendChild(o);
+      });
     }
+  });
 </script>
+
+<script>
+  const inputValor = document.getElementById("amount");
+  inputValor.addEventListener("input", () => {
+    let valor = inputValor.value.replace(/\D/g, "");
+    const parteInteira = valor.slice(0, -2);
+    const parteDecimal = valor.slice(-2);
+    inputValor.value =
+      parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + parteDecimal;
+  });
+</script>
+
 {% endblock %}

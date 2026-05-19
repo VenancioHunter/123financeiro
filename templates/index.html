@@ -1,73 +1,183 @@
-<!-- templates/login.html -->
-{% extends "layout.html" %} {% block title %}HomePage{% endblock %} {% block
-content %}
-<h2>Bem-vindo ao Dashboard</h2>
-<p>Você está logado como: {{ user_email }}</p>
-<link href="../static/css/dashboard.css" rel="stylesheet" />
-<div>
-  <div class="row text-center mt-4">
-    <div class="col-sm-12">
-      <div class="border border-0 m-2">
-        <a
-          class="card-presentation"
-          href="{{ url_for('novo_lancamento') }}"
-          style="text-decoration: none"
-        >
-          <h5>Novo Lançamento</h5>
-        </a>
-      </div>
+{% extends "layout.html" %}
+
+{% block title %}Inicio Financeiro{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <span class="eyebrow">Painel executivo</span>
+  <h1>Controle financeiro com leitura clara do caixa e da operacao.</h1>
+  <p>
+    Centralize lancamentos, acompanhe entradas e saidas em tempo real e
+    conduza a operacao com mais previsibilidade.
+  </p>
+  <div class="stat-chips">
+    <div class="stat-chip">
+      <span class="eyebrow">Usuario</span>
+      <strong>{{ user_email }}</strong>
     </div>
-    <div class="col-sm-12">
-      <div class="border border-0 m-2">
-        <a
-          class="card-presentation"
-          href="{{ url_for('lancamentos') }}"
-          style="text-decoration: none"
-        >
-          <h5>Lançamentos</h5>
-        </a>
-      </div>
+    <div class="stat-chip">
+      <span class="eyebrow">Saldo atual</span>
+      <strong>{{ saldo_atual_display }}</strong>
     </div>
-    <div class="col-sm-12">
-      <div class="border border-0 m-2">
-        <a
-          class="card-presentation"
-          href="{{ url_for('lancamento_programado') }}"
-          style="text-decoration: none"
-        >
-          <h5>Lançamento Programado</h5>
-        </a>
-      </div>
+    <div class="stat-chip">
+      <span class="eyebrow">Saldo projetado</span>
+      <strong>{{ saldo_projetado_display }}</strong>
     </div>
-    <div class="col-sm-12">
-      <div class="border border-0 m-2">
-        <a
-          class="card-presentation"
-          href="{{ url_for('transacao_pendente') }}"
-          style="text-decoration: none"
-        >
-          <h5>Os's a Receber</h5>
-        </a>
-      </div>
-    </div>
-    <div class="col-sm-12">
-      <div class="border border-0 m-2">
-        <a
-          class="card-presentation"
-          href="{{ url_for('transacoes_confirmadas') }}"
-          style="text-decoration: none"
-        >
-          <h5>OS's Recebidas</h5>
-        </a>
-      </div>
-    </div>
-    <div class="col-sm-12" hidden>
-      <div class="border border-0 m-2">
-        <a class="card-presentation" href="">
-          <h5>Extrato</h5>
-        </a>
-      </div>
+    <div class="stat-chip">
+      <span class="eyebrow">OS pendentes</span>
+      <strong>{{ pending_count }}</strong>
     </div>
   </div>
+  <div class="page-hero-actions">
+    <a class="btn btn-light" href="{{ url_for('dashboard') }}">Abrir dashboard</a>
+    <a class="btn btn-soft" href="{{ url_for('fluxo_caixa') }}">Ver fluxo de caixa</a>
+  </div>
+</section>
+
+<section class="kpi-grid">
+  <article class="kpi-card kpi-blue">
+    <span class="eyebrow">Saldo projetado</span>
+    <div class="kpi-value">{{ saldo_projetado_display }}</div>
+    <div class="kpi-support">Visao combinada entre caixa atual e recebimentos pendentes.</div>
+  </article>
+  <article class="kpi-card kpi-green">
+    <span class="eyebrow">Receitas do periodo</span>
+    <div class="kpi-value">{{ summary.receita_display }}</div>
+    <div class="kpi-support">Entradas registradas no mes selecionado.</div>
+  </article>
+  <article class="kpi-card kpi-amber">
+    <span class="eyebrow">Despesas do periodo</span>
+    <div class="kpi-value">{{ summary.despesas_display }}</div>
+    <div class="kpi-support">Saidas consolidadas para acompanhamento rapido.</div>
+  </article>
+  <article class="kpi-card kpi-rose">
+    <span class="eyebrow">Resultado do periodo</span>
+    <div class="kpi-value">{{ summary.resultado_display }}</div>
+    <div class="kpi-support">Fechamento operacional do mes corrente.</div>
+  </article>
+</section>
+
+<div class="split-layout">
+  <section class="surface-card">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Acesso rapido</span>
+        <h3>Modulos principais</h3>
+        <p>Entre nas rotinas mais usadas sem depender de menus secundarios.</p>
+      </div>
+    </div>
+    <div class="module-grid">
+      <a class="module-card" href="{{ url_for('dashboard') }}">
+        <div class="module-accent accent-blue"></div>
+        <div>
+          <h4>Dashboard</h4>
+          <small>Indicadores executivos e visao consolidada do mes.</small>
+        </div>
+      </a>
+      <a class="module-card" href="{{ url_for('fluxo_caixa') }}">
+        <div class="module-accent accent-green"></div>
+        <div>
+          <h4>Fluxo de Caixa</h4>
+          <small>Realizado, projetado e compromissos futuros.</small>
+        </div>
+      </a>
+      <a class="module-card" href="{{ url_for('lancamentos') }}">
+        <div class="module-accent accent-amber"></div>
+        <div>
+          <h4>Lancamentos</h4>
+          <small>Livro caixa com observacoes e leitura por dia.</small>
+        </div>
+      </a>
+      <a class="module-card" href="{{ url_for('novo_lancamento') }}">
+        <div class="module-accent accent-rose"></div>
+        <div>
+          <h4>Novo Lancamento</h4>
+          <small>Registro rapido de entradas e saidas operacionais.</small>
+        </div>
+      </a>
+      <a class="module-card" href="{{ url_for('ordens_servico') }}">
+        <div class="module-accent accent-blue"></div>
+        <div>
+          <h4>Ordens de Servico</h4>
+          <small>Rotina operacional integrada ao financeiro.</small>
+        </div>
+      </a>
+      <a class="module-card" href="{{ url_for('transacao_pendente') }}">
+        <div class="module-accent accent-green"></div>
+        <div>
+          <h4>OS a Receber</h4>
+          <small>Valores aguardando consolidacao financeira.</small>
+        </div>
+      </a>
+      <a class="module-card" href="{{ url_for('transacoes_confirmadas') }}">
+        <div class="module-accent accent-amber"></div>
+        <div>
+          <h4>OS Recebidas</h4>
+          <small>Historico confirmado para auditoria e conferencia.</small>
+        </div>
+      </a>
+      <a class="module-card" href="{{ url_for('ocorrencias') }}">
+        <div class="module-accent accent-rose"></div>
+        <div>
+          <h4>Ocorrencias</h4>
+          <small>Registro de desvios, ajustes e tratativas financeiras.</small>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <aside class="stack-grid">
+    <section class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Saldo do mes</span>
+          <h3>Leitura rapida</h3>
+        </div>
+      </div>
+      <div class="metric-list">
+        <div class="metric-row">
+          <strong>{{ summary.opening_balance_display }}</strong>
+          <span>Saldo de abertura</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.closing_balance_display }}</strong>
+          <span>Saldo de fechamento</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.transaction_count }}</strong>
+          <span>Movimentos registrados</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.average_ticket_display }}</strong>
+          <span>Ticket medio de entrada</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Tendencia recente</span>
+          <h3>Ultimos meses</h3>
+        </div>
+      </div>
+      <div class="trend-bars">
+        {% for item in monthly_trend %}
+        <div class="trend-bar">
+          <strong>{{ item.label }}</strong>
+          <div class="trend-track">
+            <div
+              class="trend-fill {% if item.is_positive %}positive{% else %}negative{% endif %}"
+              style="width: {{ item.bar_size }}%;"
+            ></div>
+          </div>
+          <span class="{% if item.is_positive %}amount-positive{% else %}amount-negative{% endif %}">
+            {{ item.resultado_display }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+  </aside>
 </div>
 {% endblock %}

@@ -1,96 +1,146 @@
-<!-- templates/login.html -->
-{% extends "layout.html" %} {% block title %}Lançamento Programado{% endblock %}
+{% extends "layout.html" %} {% block title %}Lancamento Programado{% endblock %}
 {% block content %}
-<script src="../static/js/formatarValor.js"></script>
-<script
-  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-  integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-  crossorigin="anonymous"
-></script>
-<script
-  src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-  integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-  crossorigin="anonymous"
-></script>
-<script
-  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
-  integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
-  crossorigin="anonymous"
-></script>
-<div>
-  <div class="row mt-4">
-    <div class="col">
-      <label for="ano" style="font-size: small; font-weight: bold">Ano</label>
-      <select class="form-select" id="ano" name="ano">
-        <option value="2024">2024</option>
-        <option value="2025" selected>2025</option>
-        <!-- Adicione outros anos, se necessário -->
-      </select>
-    </div>
-    <div class="col">
-      <label for="mes" style="font-size: small; font-weight: bold">Mês</label>
-      <select class="form-select" id="mes" name="mes">
-        <option>Selecionar</option>
-        <option value="01">Janeiro</option>
-        <option value="02">Fevereiro</option>
-        <option value="03">Março</option>
-        <option value="04">Abril</option>
-        <option value="05">Maio</option>
-        <option value="06">Junho</option>
-        <option value="07">Julho</option>
-        <option value="08">Agosto</option>
-        <option value="09">Setembro</option>
-        <option value="10">Outubro</option>
-        <option value="11">Novembro</option>
-        <option value="12">Dezembro</option>
-        <!-- Adicione outros meses -->
-      </select>
-    </div>
+<script src="{{ url_for('static', filename='js/formatarValor.js') }}"></script>
+{% set notifications = system_notifications|default({'has_notifications': False, 'overdue_count': 0, 'due_today_count': 0, 'upcoming_count': 0, 'highlighted_items': []}) %}
+<section class="page-hero">
+  <span class="eyebrow">Planejamento financeiro</span>
+  <h1>Lancamentos programados com visao de vencimento e baixa.</h1>
+  <p>
+    Organize compromissos futuros, acompanhe o que ja foi pago e repita
+    lancamentos recorrentes com mais velocidade.
+  </p>
+  <div class="page-hero-actions">
+    <button
+      type="button"
+      class="btn btn-light"
+      data-toggle="modal"
+      data-target="#lancamentoModal"
+    >
+      Novo lancamento programado
+    </button>
   </div>
+</section>
 
-  <div class="my-4 p-2" style="background-color: #888; color: white">
-    <h5>A Vencer</h5>
+{% if notifications.has_notifications %}
+<section class="surface-card" style="margin-bottom: 20px;">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">Alertas do sistema</span>
+      <h3>Compromissos que pedem acao agora</h3>
+      <p>Leitura automatica dos titulos a vencer, do dia e vencidos.</p>
+    </div>
   </div>
-  <div class="my-4">
-    <table class="table table-striped">
+  <div class="notification-summary" style="margin-bottom: 18px;">
+    <span class="pill negative">{{ notifications.overdue_count }} vencido(s)</span>
+    <span class="pill warning">{{ notifications.due_today_count }} vence(m) hoje</span>
+    <span class="pill positive">{{ notifications.upcoming_count }} a vencer</span>
+  </div>
+  <div class="notification-list notification-list-inline">
+    {% for item in notifications.highlighted_items %}
+    <article class="notification-item notification-item-card">
+      <div class="notification-item-top">
+        <span class="pill {{ item.severity_class }}">{{ item.status_label }}</span>
+        <strong>{{ item.amount_display }}</strong>
+      </div>
+      <strong class="notification-title">{{ item.description }}</strong>
+      <span class="notification-support">
+        {{ item.kind_label }} | {{ item.due_date_label }} | {{ item.status_support }}
+      </span>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="surface-card">
+  <form class="filter-bar" onsubmit="return false;" style="margin-bottom: 20px;">
+    <div class="field">
+      <label for="ano">Ano</label>
+      <select class="form-select" id="ano" name="ano">
+        {% for ano in anos %}
+        <option value="{{ ano }}" {% if ano == ano_atual %}selected{% endif %}>{{ ano }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="mes">Mes</label>
+      <select class="form-select" id="mes" name="mes">
+        {% for numero_mes, nome_mes in meses.items() %}
+        <option value="{{ '%02d'|format(numero_mes) }}" {% if '%02d'|format(numero_mes) == mes_atual %}selected{% endif %}>
+          {{ nome_mes }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">Pendencias</span>
+      <h3>A vencer</h3>
+      <p>Compromissos futuros aguardando baixa ou pagamento parcial.</p>
+    </div>
+  </div>
+  <div class="data-table-wrap">
+    <table class="table table-striped align-middle">
       <thead>
         <tr>
           <th>Categoria</th>
-          <th>Espécie</th>
-          <th>Destinatário</th>
-          <th>Descrição</th>
+          <th>Especie</th>
+          <th>Destinatario</th>
+          <th>Descricao</th>
           <th>Valor</th>
           <th>Vencimento</th>
+          <th>Pagamento</th>
+          <th>Situacao</th>
+          <th>Repetir</th>
+          <th>Cancelar</th>
         </tr>
       </thead>
       <tbody id="transactionTableBody">
-        <!-- As transações serão adicionadas aqui -->
+        <tr>
+          <td colspan="10">
+            <div class="empty-state">Carregando lancamentos pendentes...</div>
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
-  <div class="my-4">
-    <div class="my-4 p-2" style="background-color: cadetblue; color: white">
-      <h5>Pago</h5>
+
+  <div class="section-head" style="margin-top: 28px;">
+    <div>
+      <span class="eyebrow">Historico</span>
+      <h3>Pago</h3>
+      <p>Lancamentos programados ja liquidados no periodo filtrado.</p>
     </div>
-    <table class="table table-striped">
+  </div>
+  <div class="data-table-wrap">
+    <table class="table table-striped align-middle">
       <thead>
         <tr>
           <th>Categoria</th>
-          <th>Espécie</th>
-          <th>Destinatário</th>
-          <th>Descrição</th>
-          <th>Valor</th>
+          <th>Especie</th>
+          <th>Destinatario</th>
+          <th>Descricao</th>
+          <th>Valor original</th>
           <th>Valor Pago</th>
+          <th>Saldo restante</th>
           <th>Vencimento</th>
           <th>Pagamento</th>
+          <th>Status</th>
+          <th>Repetir</th>
         </tr>
       </thead>
       <tbody id="transactionPaidTableBody">
-        <!-- As transações serão adicionadas aqui -->
+        <tr>
+          <td colspan="10">
+            <div class="empty-state">Carregando lancamentos pagos...</div>
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
-</div>
+</section>
 
 <!-- Modal para Pagar -->
 <div
@@ -216,8 +266,7 @@
           <div class="my-4">
             <label for="origem" style="font-size: small">Origem</label>
             <select class="form-select" name="origem" required>
-              {% for id in destinatarios %} {% if destinatarios[id] == 'Central
-              Vazamentos' %}
+              {% for id in destinatarios %} {% if destinatarios[id] == '123 Caça Vazamentos' %}
               <option value="{{destinatarios[id]}}" selected>
                 {{destinatarios[id]}}
               </option>
@@ -440,36 +489,6 @@
   </div>
 </div>
 
-<div>
-  <link
-    rel="stylesheet"
-    href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css"
-  />
-  <a
-    href="#"
-    style="
-      position: fixed;
-      width: 60px;
-      height: 60px;
-      bottom: 40px;
-      right: 40px;
-      background-color: #ff4081;
-      color: #fff;
-      border-radius: 50px;
-      text-align: center;
-      font-size: 35px;
-      box-shadow: 1px 1px 2px #888;
-      z-index: 1000;
-      cursor: pointer;
-      text-decoration: none;
-    "
-    data-toggle="modal"
-    data-target="#lancamentoModal"
-  >
-    <span>+</span>
-  </a>
-</div>
-
 <script>
   $("#pagarModal").on("show.bs.modal", function (event) {
     var button = $(event.relatedTarget); // Botão que acionou o modal
@@ -498,59 +517,6 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-<script>
-  const select1 = document.getElementById("categoria");
-  const select2 = document.getElementById("especie");
-
-  // Objeto que mapeia as opções
-  const optionsMap = {
-    pessoal: [
-      { value: "operacional", text: "Operacional" },
-      { value: "administrativo", text: "Administrativo" },
-    ],
-    publicidade: [
-      { value: "google ads", text: "Google ads" },
-      { value: "meta", text: "meta" },
-      { value: "rádio", text: "Rário" },
-      { value: "TV", text: "TV" },
-    ],
-    escritório: [
-      { value: "aluguel", text: "Aluguel" },
-      { value: "água", text: "Água" },
-      { value: "energia", text: "Energia" },
-      { value: "internet", text: "Internet" },
-      { value: "celular", text: "Celular" },
-      { value: "equipamentos", text: "Equipamentos" },
-    ],
-    comissão: [
-      { value: "operacional", text: "Operacional" },
-      { value: "administrativa", text: "Administrativa" },
-    ],
-    transporte: [
-      { value: "combustível", text: "Combustível" },
-      { value: "passagem", text: "Passagem" },
-    ],
-  };
-
-  // Função que atualiza o segundo select com base na seleção do primeiro
-  select1.addEventListener("change", function () {
-    const selectedValue = select1.value;
-
-    // Limpa o segundo select
-    select2.innerHTML = "<option value=''>Selecione uma opção</option>";
-
-    // Se houver uma opção válida no primeiro select
-    if (optionsMap[selectedValue]) {
-      // Adiciona as novas opções no segundo select
-      optionsMap[selectedValue].forEach((option) => {
-        const newOption = document.createElement("option");
-        newOption.value = option.value;
-        newOption.text = option.text;
-        select2.appendChild(newOption);
-      });
-    }
-  });
-</script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     configurarFormatacaoValor("amount");
@@ -722,24 +688,96 @@
       .catch((error) => console.error("Erro ao buscar transações:", error));
   }
 
+  function parseCurrencyValue(value) {
+    if (typeof value === "number") {
+      return value;
+    }
+
+    const raw = String(value ?? "")
+      .trim()
+      .replace(/^R\$\s*/, "")
+      .replace(/\s+/g, "");
+
+    if (!raw) {
+      return 0;
+    }
+
+    const hasComma = raw.includes(",");
+    const hasDot = raw.includes(".");
+
+    if (hasComma && hasDot) {
+      const lastComma = raw.lastIndexOf(",");
+      const lastDot = raw.lastIndexOf(".");
+
+      if (lastComma > lastDot) {
+        return Number.parseFloat(raw.replace(/\./g, "").replace(",", "."));
+      }
+
+      return Number.parseFloat(raw.replace(/,/g, ""));
+    }
+
+    if (hasComma) {
+      return Number.parseFloat(raw.replace(/\./g, "").replace(",", "."));
+    }
+
+    if (hasDot) {
+      const [, decimalPart = ""] = raw.split(".");
+
+      if (decimalPart.length === 2) {
+        return Number.parseFloat(raw);
+      }
+
+      return Number.parseFloat(raw.replace(/\./g, ""));
+    }
+
+    return Number.parseFloat(raw);
+  }
+
+  function formatCurrency(value) {
+    const numeric = parseCurrencyValue(value);
+    if (Number.isNaN(numeric)) {
+      return value || "R$ 0,00";
+    }
+
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(numeric);
+  }
+
   function updateTransactionTable(transactions) {
     const tableBody = document.getElementById("transactionTableBody");
     tableBody.innerHTML = ""; // Limpa a tabela antes de atualizar
     console.log("Atualizando tabela com transações:", transactions);
 
+    if (!transactions.length) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="10">
+            <div class="empty-state">Nenhum lancamento pendente encontrado para este periodo.</div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
     transactions.forEach((transaction) => {
       const row = document.createElement("tr");
+      const situacao = transaction.parcial
+        ? '<span class="pill warning">Parcial</span>'
+        : '<span class="pill positive">Em aberto</span>';
+      const acaoLabel = transaction.parcial ? "Pagar saldo" : "Pagar";
       row.innerHTML = `
             <td>${transaction.category || ""}</td>
             <td>${transaction.especie || ""}</td>
             <td>${transaction.destinatario || ""}</td>
             <td>${transaction.description || ""}</td>
-            <td>${transaction.amount || ""}</td>
+            <td class="amount-negative">${formatCurrency(transaction.amount)}</td>
             <td>${transaction.vencimento || ""}</td>
             <td> <button class="btn btn-sm btn-success" data-toggle="modal" data-target="#pagarModal" data-id="${
               transaction.id
-            }" data-vencimento="${transaction.vencimento}">Pagar</button> </td>
-            <td>${transaction.parcial ? "Parcial" : ""}</td>
+            }" data-vencimento="${transaction.vencimento}">${acaoLabel}</button> </td>
+            <td>${situacao}</td>
             <td>
             <button class="btn btn-sm btn-warning btn-repetir"
                 data-origem="${transaction.origem || ""}"
@@ -784,17 +822,35 @@
     tableBody.innerHTML = ""; // Limpa a tabela antes de atualizar
     console.log("Atualizando tabela com transações:", transactions);
 
+    if (!transactions.length) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="10">
+            <div class="empty-state">Nenhum lancamento pago encontrado para este periodo.</div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
     transactions.forEach((transaction) => {
       const row = document.createElement("tr");
+      const valorOriginal = transaction.valororiginal || transaction.amount || "0.00";
+      const saldoRestante = transaction.saldorestante || (transaction.parcial ? transaction.amount : "0.00");
+      const status = transaction.parcial
+        ? '<span class="pill warning">Parcial</span>'
+        : '<span class="pill positive">Liquidado</span>';
       row.innerHTML = `
             <td>${transaction.category || ""}</td>
             <td>${transaction.especie || ""}</td>
             <td>${transaction.destinatario || ""}</td>
             <td>${transaction.description || ""}</td>
-            <td>${transaction.amount || ""}</td>
-            <td>${transaction.valorpago || ""}</td>
+            <td>${formatCurrency(valorOriginal)}</td>
+            <td class="amount-negative">${formatCurrency(transaction.valorpago || 0)}</td>
+            <td>${formatCurrency(saldoRestante)}</td>
             <td>${transaction.vencimento || ""}</td>
             <td>${transaction.datapagamento || ""}</td>
+            <td>${status}</td>
             <td>
             <button class="btn btn-sm btn-warning btn-repetir"
                 data-origem="${transaction.origem || ""}"

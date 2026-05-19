@@ -1,24 +1,39 @@
-<!-- templates/login.html -->
 {% extends "layout.html" %}
 
-{% block title %}Usuário{% endblock %}
+{% block title %}Perfil do Usuario{% endblock %}
 
 {% block content %}
-<div class="my-2">
-    <h2>Usuário</h2>
-</div>
-<link href="../static/css/dashboard.css" rel="stylesheet">
-<div>
+<section class="page-hero">
+  <span class="eyebrow">Perfil operacional</span>
+  <h1>{{ name }}</h1>
+  <p>
+    Visualizacao rapida das cidades associadas ao usuario para apoiar leitura
+    de origem dos lancamentos e operacao vinculada.
+  </p>
+</section>
+
+<section class="surface-card">
+  <div class="section-head">
     <div>
-        <label>Nome:</label>
-        <span>{{ name }}</span>
+      <span class="eyebrow">Cobertura</span>
+      <h3>Cidades vinculadas</h3>
     </div>
-    <div>
-        <ul class="list-group">
-            {% for city in cities %}
-            <li class="list-group-item">{{ city }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-</div>
+  </div>
+
+  {% if cities %}
+  <div class="module-grid">
+    {% for city in cities %}
+    <article class="module-card">
+      <div class="module-accent accent-blue"></div>
+      <div>
+        <h4>{{ city }}</h4>
+        <small>Unidade relacionada a este usuario.</small>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">Nao ha cidades cadastradas para este usuario.</div>
+  {% endif %}
+</section>
 {% endblock %}

@@ -1,0 +1,241 @@
+{% extends "layout.html" %}
+
+{% block title %}Ocorrencias{% endblock %}
+
+{% block content %}
+<script src="{{ url_for('static', filename='js/formatarValor.js') }}"></script>
+
+<section class="page-hero">
+  <span class="eyebrow">Gestao de ocorrencias</span>
+  <h1>Desvios, ajustes e tratativas registradas com historico claro.</h1>
+  <p>
+    Controle eventos financeiros e operacionais em uma fila organizada por
+    situacao, valor e tecnico responsavel.
+  </p>
+  <div class="page-hero-actions">
+    <button
+      type="button"
+      class="btn btn-light"
+      data-bs-toggle="modal"
+      data-bs-target="#modalNovaOcorrencia"
+    >
+      Nova ocorrencia
+    </button>
+  </div>
+</section>
+
+<section class="surface-card">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">Fila de ocorrencias</span>
+      <h3>Registro consolidado</h3>
+      <p>Consulte, edite e encerre ocorrencias sem perder contexto historico.</p>
+    </div>
+  </div>
+
+  <div class="data-table-wrap">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Data</th>
+          <th>Tecnico</th>
+          <th>OS</th>
+          <th>Descricao</th>
+          <th>Valor</th>
+          <th>Acao</th>
+          <th>Resultado</th>
+          <th>Situacao</th>
+          <th>Acoes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in ocorrencias %}
+        <tr>
+          <td>{{ o.numero }}</td>
+          <td>{{ o.data.split('-')[2] }}/{{ o.data.split('-')[1] }}/{{ o.data.split('-')[0] }}</td>
+          <td>{{ o.tecnico }}</td>
+          <td>{{ o.os }}</td>
+          <td>{{ o.descricao }}</td>
+          <td>{{ "R$ " ~ o.valor }}</td>
+          <td>{{ o.acao }}</td>
+          <td>{{ o.resultado }}</td>
+          <td>
+            <span class="pill {% if o.situacao == 'Pendente' %}warning{% else %}positive{% endif %}">
+              {{ o.situacao }}
+            </span>
+          </td>
+          <td class="nowrap">
+            <button
+              type="button"
+              class="btn btn-sm btn-soft"
+              data-bs-toggle="modal"
+              data-bs-target="#modalEditarOcorrencia"
+              data-id="{{ o.id }}"
+              data-data="{{ o.data }}"
+              data-tecnico="{{ o.tecnico }}"
+              data-os="{{ o.os }}"
+              data-descricao="{{ o.descricao }}"
+              data-valor="{{ o.valor }}"
+              data-acao="{{ o.acao }}"
+              data-resultado="{{ o.resultado }}"
+              data-situacao="{{ o.situacao }}"
+            >
+              Editar
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger"
+              data-bs-toggle="modal"
+              data-bs-target="#modalDeletarOcorrencia"
+              data-id="{{ o.id }}"
+            >
+              Excluir
+            </button>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="10">
+            <div class="empty-state">Nenhuma ocorrencia cadastrada ate o momento.</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="modal fade" id="modalNovaOcorrencia" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="/criar_ocorrencia" class="modal-content" style="border-radius: 22px;">
+      <div class="modal-header">
+        <h5 class="modal-title">Nova ocorrencia</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="date" id="novaDataOcorrencia" name="data" class="form-control mb-2" required />
+        <input type="text" name="tecnico" class="form-control mb-2" placeholder="Tecnico" list="listaTecnicos" required />
+        <datalist id="listaTecnicos">
+          {% for uid, t in tecnicos.items() %}
+          <option value="{{ t.name }}"></option>
+          {% endfor %}
+        </datalist>
+        <input type="text" name="os" class="form-control mb-2" placeholder="OS" />
+        <textarea name="descricao" class="form-control mb-2" placeholder="Descricao" required></textarea>
+        <input id="ocValor" type="tel" name="valor" class="form-control mb-2" placeholder="Valor" />
+        <input type="text" name="acao" class="form-control mb-2" placeholder="Acao" />
+        <select name="situacao" class="form-control mb-2">
+          <option value="Pendente">Pendente</option>
+          <option value="Resolvido">Resolvido</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="modalEditarOcorrencia" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="/editar_ocorrencia" class="modal-content" style="border-radius: 22px;">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar ocorrencia</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="ocorrencia_id" id="editId" />
+        <input type="date" name="data" id="editData" class="form-control mb-2" required />
+        <input type="text" name="tecnico" id="editTecnico" class="form-control mb-2" required />
+        <input type="text" name="os" id="editOs" class="form-control mb-2" />
+        <textarea name="descricao" id="editDescricao" class="form-control mb-2" placeholder="Descricao" required></textarea>
+        <input type="tel" name="valor" id="editValor" class="form-control mb-2" placeholder="Valor" />
+        <input type="text" name="acao" id="editAcao" class="form-control mb-2" placeholder="Acao" />
+        <input type="text" name="resultado" id="editResultado" class="form-control mb-2" placeholder="Resultado" />
+        <select name="situacao" id="editSituacao" class="form-control mb-2">
+          <option value="Pendente">Pendente</option>
+          <option value="Resolvido">Resolvido</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary">Salvar alteracoes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="modalDeletarOcorrencia" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form method="post" action="/deletar_ocorrencia" class="modal-content" style="border-radius: 22px;">
+      <div class="modal-header">
+        <h5 class="modal-title">Excluir ocorrencia</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="ocorrencia_id" id="deleteId" />
+        <p class="mb-0">Deseja realmente excluir esta ocorrencia?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-outline-danger">Excluir</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const novaData = document.getElementById("novaDataOcorrencia");
+  const novoValorOcorrencia = document.getElementById("ocValor");
+  const editarValorOcorrencia = document.getElementById("editValor");
+
+  if (novaData) {
+    const today = new Date().toISOString().split("T")[0];
+    novaData.value = today;
+  }
+
+  if (typeof configurarFormatacaoValor === "function") {
+    if (novoValorOcorrencia) {
+      configurarFormatacaoValor("ocValor");
+      novoValorOcorrencia.value = "0,00";
+    }
+
+    if (editarValorOcorrencia) {
+      configurarFormatacaoValor("editValor");
+    }
+  }
+
+  const editModal = document.getElementById("modalEditarOcorrencia");
+  if (editModal) {
+    editModal.addEventListener("show.bs.modal", function (event) {
+      const button = event.relatedTarget;
+      document.getElementById("editId").value = button.getAttribute("data-id") || "";
+      document.getElementById("editData").value = button.getAttribute("data-data") || "";
+      document.getElementById("editTecnico").value = button.getAttribute("data-tecnico") || "";
+      document.getElementById("editOs").value = button.getAttribute("data-os") || "";
+      document.getElementById("editDescricao").value = button.getAttribute("data-descricao") || "";
+      document.getElementById("editValor").value = button.getAttribute("data-valor") || "";
+      document.getElementById("editAcao").value = button.getAttribute("data-acao") || "";
+      document.getElementById("editResultado").value = button.getAttribute("data-resultado") || "";
+      document.getElementById("editSituacao").value = button.getAttribute("data-situacao") || "Pendente";
+
+      if (editarValorOcorrencia) {
+        editarValorOcorrencia.value = editarValorOcorrencia.value || "0,00";
+        formatarValor(editarValorOcorrencia);
+      }
+    });
+  }
+
+  const deleteModal = document.getElementById("modalDeletarOcorrencia");
+  if (deleteModal) {
+    deleteModal.addEventListener("show.bs.modal", function (event) {
+      const button = event.relatedTarget;
+      document.getElementById("deleteId").value = button.getAttribute("data-id") || "";
+    });
+  }
+</script>
+{% endblock %}

@@ -1,561 +1,519 @@
-<!-- templates/lancamentos.html -->
 {% extends "layout.html" %}
 
-{% block title %}Lançamentos{% endblock %}
+{% block title %}Livro Caixa{% endblock %}
 
 {% block content %}
-<script src="../static/js/formatarValor.js"></script>
+<section class="page-hero">
+  <span class="eyebrow">Livro caixa</span>
+  <h1>Lancamentos organizados para conferencia, analise e rastreabilidade.</h1>
+  <p>
+    Veja o caixa por dia, acompanhe o fechamento do mes e mantenha observacoes
+    e exclusoes sob controle operacional.
+  </p>
+  <div class="stat-chips">
+    <div class="stat-chip">
+      <span class="eyebrow">Caixa atual</span>
+      <strong>{{ caixa }}</strong>
+    </div>
+    <div class="stat-chip">
+      <span class="eyebrow">Saldo de abertura</span>
+      <strong>{{ summary.opening_balance_display }}</strong>
+    </div>
+    <div class="stat-chip">
+      <span class="eyebrow">Saldo de fechamento</span>
+      <strong>{{ summary.closing_balance_display }}</strong>
+    </div>
+  </div>
+  <div class="page-hero-actions">
+    <button
+      type="button"
+      class="btn btn-light"
+      data-bs-toggle="modal"
+      data-bs-target="#novoLancamentoModal"
+    >
+      Novo lancamento
+    </button>
+    <a class="btn btn-soft" href="{{ url_for('lancamento_programado') }}">Lancar programacao</a>
+  </div>
+</section>
 
-<div class="container mt-4">
-    <h2>Lançamentos do Mês de {{ mes }} de {{ ano }}</h2>
+<section class="surface-card" style="margin-bottom: 20px;">
+  <form class="filter-bar" method="get" action="{{ url_for('lancamentos') }}">
+    <div class="field">
+      <label for="mes">Mes</label>
+      <select class="form-select" id="mes" name="mes">
+        {% for numero_mes, nome_mes in meses.items() %}
+        <option value="{{ numero_mes }}" {% if numero_mes == mes %}selected{% endif %}>
+          {{ nome_mes }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="ano">Ano</label>
+      <select class="form-select" id="ano" name="ano">
+        {% for ano_opcao in anos %}
+        <option value="{{ ano_opcao }}" {% if ano_opcao == ano %}selected{% endif %}>
+          {{ ano_opcao }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <button class="btn btn-primary w-100" type="submit">Atualizar livro caixa</button>
+    </div>
+  </form>
+</section>
 
-    <!-- Formulário para seleção de mês e ano -->
-    <form id="filtro-lancamentos" method="GET" action="{{ url_for('lancamentos') }}">
-        <div class="row mb-4">
-            <div class="col-4">
-                <select name="mes" class="form-select" id="select-mes">
-                    {% for numero_mes, nome_mes in meses.items() %}
-                    <option value="{{ numero_mes }}" {% if numero_mes==mes %}selected{% endif %}>
-                        {{ nome_mes }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-4">
-                <select name="ano" class="form-select" id="select-ano">
-                    {% for ano_opcao in anos %}
-                    <option value="{{ ano_opcao }}" {% if ano_opcao==ano %}selected{% endif %}>
-                        {{ ano_opcao }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
+<section class="kpi-grid">
+  <article class="kpi-card kpi-green">
+    <span class="eyebrow">Receitas</span>
+    <div class="kpi-value">{{ summary.receita_display }}</div>
+    <div class="kpi-support">Entradas realizadas em {{ meses[mes] }}/{{ ano }}.</div>
+  </article>
+  <article class="kpi-card kpi-rose">
+    <span class="eyebrow">Despesas</span>
+    <div class="kpi-value">{{ summary.despesas_display }}</div>
+    <div class="kpi-support">Saidas registradas e prontas para auditoria.</div>
+  </article>
+  <article class="kpi-card kpi-blue">
+    <span class="eyebrow">Resultado</span>
+    <div class="kpi-value">{{ summary.resultado_display }}</div>
+    <div class="kpi-support">Diferenca entre entradas e saidas do periodo.</div>
+  </article>
+  <article class="kpi-card kpi-amber">
+    <span class="eyebrow">Volume</span>
+    <div class="kpi-value">{{ summary.transaction_count }}</div>
+    <div class="kpi-support">Movimentos consolidados neste mes.</div>
+  </article>
+</section>
+
+<div class="split-layout lancamentos-split-layout">
+  <section class="stack-grid lancamentos-main-column">
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Movimentos do mes</span>
+          <h3>Livro diario</h3>
+          <p>Cada linha mostra o impacto no caixa e permite observacao e exclusao.</p>
         </div>
+      </div>
+      {% if daily_rows %}
+      <div class="data-table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Dia</th>
+              <th>N lanc.</th>
+              <th>Origem</th>
+              <th>Categoria</th>
+              <th>Descricao</th>
+              <th>Tipo</th>
+              <th>Valor</th>
+              <th>Obs.</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in daily_rows %}
+              {% for item in row.transactions %}
+              <tr>
+                <td class="nowrap">{{ row.date_label }}</td>
+                <td>{{ item.numero_transaction or "-" }}</td>
+                <td>
+                  {% if item.id_origem %}
+                  <a href="{{ url_for('profile_user', id=item.id_origem) }}">{{ item.origem }}</a>
+                  {% else %}
+                  {{ item.origem }}
+                  {% endif %}
+                </td>
+                <td>
+                  <strong>{{ item.category }}</strong>
+                  {% if item.especie and item.especie != "-" %}
+                  <div class="muted" style="font-size: 0.82rem;">{{ item.especie }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <div>{{ item.description or "-" }}</div>
+                  {% if "Baixa parcial programada" in (item.description or "") %}
+                  <div class="mt-1">
+                    <span class="pill warning">Programado parcial</span>
+                  </div>
+                  {% elif "Baixa programada" in (item.description or "") %}
+                  <div class="mt-1">
+                    <span class="pill positive">Programado total</span>
+                  </div>
+                  {% endif %}
+                  {% if item.destinatario and item.destinatario != "-" %}
+                  <div class="muted" style="font-size: 0.82rem;">Destino: {{ item.destinatario }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="pill {% if item.type == 'c' %}positive{% else %}negative{% endif %}">
+                    {{ item.type_label }}
+                  </span>
+                </td>
+                <td class="{% if item.type == 'c' %}amount-positive{% else %}amount-negative{% endif %}">
+                  {{ item.amount_display }}
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-soft"
+                    data-id="{{ item.id }}"
+                    data-date="{{ item.date_iso }}"
+                    data-observacao="{{ item.observacao }}"
+                    onclick="openObservationModal(this)"
+                  >
+                    {{ "Ver / editar" if item.observacao else "Adicionar" }}
+                  </button>
+                </td>
+                <td>
+                  <form method="post" action="{{ url_for('delete_transaction') }}" onsubmit="return confirm('Deseja deletar este lancamento?');">
+                    <input type="hidden" name="deleteDate" value="{{ item.date_iso }}" />
+                    <input type="hidden" name="deleteTransactionId" value="{{ item.id }}" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+              <tr>
+                <td colspan="4" class="muted"><strong>Fechamento do dia</strong></td>
+                <td class="muted">Abertura: {{ row.opening_balance_display }}</td>
+                <td class="amount-positive">Entradas: {{ row.inflow_display }}</td>
+                <td class="amount-negative">Saidas: {{ row.outflow_display }}</td>
+                <td colspan="2" class="{% if row.closing_balance >= 0 %}amount-positive{% else %}amount-negative{% endif %}">
+                  Saldo: {{ row.closing_balance_display }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">Nao ha lancamentos cadastrados para este periodo.</div>
+      {% endif %}
+    </article>
+  </section>
+
+  <aside class="stack-grid lancamentos-side-column">
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Fechamento gerencial</span>
+          <h3>Resumo do periodo</h3>
+        </div>
+      </div>
+      <div class="metric-list">
+        <div class="metric-row">
+          <strong>{{ summary.opening_balance_display }}</strong>
+          <span>Saldo de abertura</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.closing_balance_display }}</strong>
+          <span>Saldo de fechamento</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.average_ticket_display }}</strong>
+          <span>Ticket medio das entradas</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.transaction_count }}</strong>
+          <span>Quantidade de movimentos</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Categorias</span>
+          <h3>Saldo por grupo</h3>
+        </div>
+      </div>
+      {% if summary.categories %}
+      <div class="data-table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Entradas</th>
+              <th>Saidas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in summary.categories[:8] %}
+            <tr>
+              <td>{{ item.name }}</td>
+              <td class="amount-positive">{{ item.credit_display }}</td>
+              <td class="amount-negative">{{ item.debit_display }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">Sem dados suficientes por categoria neste mes.</div>
+      {% endif %}
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Cadastros de apoio</span>
+          <h3>Novo destinatario</h3>
+          <p>Mantenha a base de lancamentos organizada e pronta para novas rotinas.</p>
+        </div>
+      </div>
+      <form method="post" action="{{ url_for('cadastrar_destinatario') }}" class="quick-form">
+        <div>
+          <label for="namedestinatario">Nome do destinatario</label>
+          <input
+            class="form-control"
+            type="text"
+            id="namedestinatario"
+            name="namedestinatario"
+            placeholder="Ex.: Fornecedor ou unidade"
+            required
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar destinatario</button>
+      </form>
+      <div class="mt-4">
+        <span class="eyebrow">Base atual</span>
+        <div class="trend-bars mt-2">
+          {% for item in (destinatarios.values() | list)[:6] %}
+          <div class="metric-row">
+            <strong>{{ item }}</strong>
+            <span>Disponivel para novos lancamentos</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </article>
+  </aside>
+</div>
+
+<div class="modal fade" id="novoLancamentoModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <form method="post" action="{{ url_for('post_lancamento') }}" class="modal-content" style="border-radius: 22px;">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title mb-1">Novo lancamento</h5>
+          <small class="text-muted">Registre receita ou despesa sem sair do livro caixa.</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label for="modalTypeTransaction">Tipo</label>
+            <select class="form-select" id="modalTypeTransaction" name="typeTransaction" required>
+              <option value="c">Receita</option>
+              <option value="d">Despesa</option>
+            </select>
+          </div>
+          <div class="col-md-8">
+            <label for="modalOrigem">Origem</label>
+            <select class="form-select" id="modalOrigem" name="origem" required>
+              {% for id in destinatarios %}
+              <option value="{{ destinatarios[id] }}">{{ destinatarios[id] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="modalAmount">Valor (R$)</label>
+            <input class="form-control" id="modalAmount" name="amount" placeholder="0,00" required />
+          </div>
+          <div class="col-md-6">
+            <label for="modalDate">Data</label>
+            <input class="form-control" type="date" id="modalDate" name="date" required />
+          </div>
+
+          <div class="col-md-6">
+            <label for="modalCategoria">Categoria</label>
+            <select id="modalCategoria" class="form-select" name="categoria" required>
+              <option value="">Selecionar</option>
+              <option value="pessoal">Pessoal</option>
+              <option value="publicidade">Publicidade</option>
+              <option value="escritorio">Escritorio</option>
+              <option value="comissao">Comissao</option>
+              <option value="transporte">Transporte</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="modalEspecie">Especie</label>
+            <select id="modalEspecie" class="form-select" name="especie" required>
+              <option value="">Selecione primeiro uma categoria</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="modalDestinatario">Destinatario</label>
+            <select class="form-select" id="modalDestinatario" name="destinatario">
+              <option value="">Selecionar</option>
+              {% for id in destinatarios %}
+              <option value="{{ destinatarios[id] }}">{{ destinatarios[id] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="modalDescricao">Descricao</label>
+            <input class="form-control" type="text" id="modalDescricao" name="descricao" placeholder="Resumo do movimento" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar lancamento</button>
+      </div>
     </form>
+  </div>
+</div>
 
-    <!-- Resultados e tabela de lançamentos -->
-    <div class="row my-4 rounded-3" align="end">
-        <div class="col"></div>
-        <div class="col"></div>
-        <div class="col bg-white" style="color: gray;">
-            <div class=" mt-2 d-flex justify-content-between" style="font-size: small;">
-                <label>Saldo atual</label>
-                <span class="text-success">{{caixa}}</span>
-            </div>
-            <hr>
-            <div align="center">
-                <span>Resultados (R$)</span>
-            </div>
-            <div class="d-flex justify-content-between" style="font-size: small;">
-                <label>Receitas</label>
-                <span class="text-success">{{receita}}</span>
-            </div>
-            <div class="d-flex justify-content-between" style="font-size: small;">
-                <label>Despesas</label>
-                <span class="text-danger">{{despesas}}</span>
-            </div>
-            <div class="d-flex justify-content-between" style="font-size: small; font-weight: bold;">
-                <label>Resultado</label>
-                <span>{{resultado}}</span>
-            </div>
-        </div>
+<div class="modal fade" id="observacaoModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius: 20px;">
+      <div class="modal-header">
+        <h5 class="modal-title">Observacao do lancamento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="obsTransactionId" />
+        <input type="hidden" id="obsDate" />
+        <textarea
+          class="form-control"
+          id="obsTexto"
+          rows="5"
+          placeholder="Descreva contexto, justificativa ou complemento do movimento."
+        ></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveObservation()">Salvar observacao</button>
+      </div>
     </div>
-
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Usuário</th>
-                <th>Data</th>
-                <th>Origem</th>
-                <th>Categoria</th>
-                <th>Espécie</th>
-                <th>Destinatário</th>
-                <th>Descrição</th>
-                <th>Tipo</th>
-                <th>Valor (R$)</th>
-                <th></th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for day, day_data in transactions.items() %}
-            {% for transaction_id, transaction in day_data.transactions.items() %}
-            <tr>
-                <td>{{ transaction.user }}</td>
-                <td>{{ day }}/{{ mes }}/{{ ano }}</td>
-                <td><a href="/profile_user/{{transaction.id_origem}}">{{ transaction.origem }}</a></td>
-                <td>{{ transaction.category }}</td>
-                <td>{{ transaction.especie }}</td>
-                <td>{{ transaction.destinatario }}</td>
-                <td>{{ transaction.description }}</td>
-                <td>
-                    {% if transaction.type == 'c' %}
-                    <span class="badge bg-success">Crédito</span>
-                    {% else %}
-                    <span class="badge bg-danger">Débito</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if transaction.type == 'c' %}
-                    <span class="text-success">{{ transaction.amount }}</span>
-                    {% else %}
-                    <span class="text-danger">-{{ transaction.amount }}</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <!-- Botão para editar o lançamento -->
-                    <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editLancamentoModal"
-                        data-id="{{ transaction_id }}" data-date="{{ day }}/{{ mes }}/{{ ano }}"
-                        data-category="{{ transaction.category }}" data-especie="{{ transaction.especie }}"
-                        data-destinatario="{{ transaction.destinatario }}" data-description="{{ transaction.description }}"
-                        data-type="{{ transaction.type }}" data-amount="{{ transaction.amount }}">
-                        Editar
-                    </button>
-                </td>
-                <td>
-                    <!-- Botão para editar o lançamento -->
-                    <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteTransactionModal" data-id="{{ transaction_id }}" data-date="{{ day }}/{{ '%02d' % mes }}/{{ ano }}">
-                        Deletar
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-            <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>
-                    <span style="font-weight: bold;">Resultado R${{ saldo[day] | round(2) }}</span>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  </div>
 </div>
+{% endblock %}
 
-<!-- Modal para gerar lançamento -->
-<div class="modal fade" id="lancamentoModal" tabindex="-1" role="dialog" aria-labelledby="lancamentoModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <form id="lancamentoForm" method="post" action="/post_lancamento">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div style="width: 100%;">
-                <Label style="font-size: small; font-weight: bold;">Tipo</Label>
-                <div>
-                <select class="form-select" name="typeTransaction" required>
-                    <option value="c">Receita</option>
-                    <option value="d" selected>Despesa</option>
-                </select>
-                </div>
-                </div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                    <div class="my-4">
-                        <label for="origem" style="font-size: small;">Origem</label>
-                        <select class="form-select" name="origem" required>
-                            {% for id in destinatarios %}
-                                {% if destinatarios[id] == 'Central Vazamentos' %}
-                                    <option value="{{destinatarios[id]}}" selected>{{destinatarios[id]}}</option>
-                                {% else %}
-                                    <option value="{{destinatarios[id]}}">{{destinatarios[id]}}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <Label style="font-size: small;">Valor (R$)</Label>
-                            <input type="tel" class="form-control" name="amount" id="amount" value="0,00" required>
-                        </div>
-                        <div class="col">
-                            <Label style="font-size: small;">Data</Label>
-                            <input class="form-control" type="date" id="date" name="date" required>
-                        </div>
-                    </div>
-                    <div class="my-2">
-                        <Label style="font-size: small;">Categoria</Label>
-                        <select id="categoria" class="form-select" name="categoria" required>
-                            <option>Selecionar</option>
-                            <option value="pessoal">Pessoal</option>
-                            <option value="publicidade">Publicidade</option>
-                            <option value="escritório">Escritório</option>
-                            <option value="comissão">Comissão</option>
-                            <option class="transporte">Transporte</option>
-                        </select>
-                    </div>
-
-                    <label for="especie" style="font-size: small;">Espécie</label>
-                    <select id="especie" class="form-select" name="especie">
-                        <option value="">Selecione primeiro uma opção acima</option>
-                    </select>
-                    <div class="my-4">
-                        <label for="destinatario" style="font-size: small;">Destinatário</label>
-                        <select class="form-select" name="destinatario">
-                            <option selected value="">Selecionar</option>
-                            {% for id in destinatarios %}
-                            <option value="{{destinatarios[id]}}">{{destinatarios[id]}}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="row my-2">
-                        <div class="col">
-                            <Label style="font-size: small;">Observação</Label>
-                            <textarea class="form-control" type="text" name="descricao"></textarea>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary mt-2" style="width: 100%;">Salvar</button>
-                
-            </div>
-        </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal para cadastrar destinatário -->
-<div class="modal fade" id="destinatarioModal" tabindex="-1" role="dialog" aria-labelledby="destinatarioModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5>Cadastrar Destinatário</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="destinatarioForm" method="post" action="/cadastrar_destinatario">
-                    <div class="my-2">
-                        <div>
-                            <Label style="font-size: small;">Nome Destinatário</Label>
-                            <input class="form-control" type="text" id="namedestinatario" name="namedestinatario">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary mt-2" style="width: 100%;">Cadastrar</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para deletar transação -->
-<div class="modal fade" id="deleteTransactionModal" tabindex="-1" role="dialog" aria-labelledby="deleteTransactionModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header" style="border: none;">
-                <div align="center">
-                    <h5>Remover Transação?</h5>
-                </div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                
-                <form id="destinatarioForm" method="post" action="/delete_transaction">
-                            <input class="form-control" type="text" id="deleteTransactionId" name="deleteTransactionId" hidden>
-                            <input class="form-control" type="date" id="deleteDate" name="deleteDate" hidden>
-                    
-                    <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" style="width: 40%;" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary" style="width: 40%;">Confirmar</button>
-                    </div>
-                    
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para editar lançamento -->
-<div class="modal fade" id="editLancamentoModal" tabindex="-1" role="dialog" aria-labelledby="editLancamentoModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <form id="editLancamentoForm" method="post" action="/editar_lancamento">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <select class="form-select" name="editTypeTransaction" id="editTypeTransaction"
-                        style="border: none;">
-                        <option value="c">Receita</option>
-                        <option value="d">Despesa</option>
-                    </select>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="editTransactionId" name="transaction_id"> <!-- ID do lançamento -->
-
-                    <div class="row">
-                        <div class="col">
-                            <Label style="font-size: small;">Valor (R$)</Label>
-                            <input class="form-control" name="editAmount" id="editAmount" required>
-                        </div>
-                        <div class="col">
-                            <Label style="font-size: small;">Data</Label>
-                            <input class="form-control" id="editDate" name="editDate" required>
-                        </div>
-                    </div>
-                    <div class="my-2">
-                        <Label style="font-size: small;">Categoria</Label>
-                        <select class="form-select" id="editCategoria" name="editCategoria" required>
-                            <option>Selecionar</option>
-                            <option value="pessoal">Pessoal</option>
-                            <option value="publicidade">Publicidade</option>
-                            <option value="escritório">Escritório</option>
-                            <option value="comissão">Comissão</option>
-                            <option value="transporte">Transporte</option>
-                        </select>
-                    </div>
-
-                    <label for="editEspecie" style="font-size: small;">Espécie</label>
-                    <select id="editEspecie" class="form-select"  name="editEspecie">
-                        <option value="">Selecione primeiro uma opção acima</option>
-                    </select>
-
-                    <div class="my-4">
-                        <label for="editDestinatario" style="font-size: small;">Destinatário</label>
-                        <select class="form-select" name="editDestinatario" id="editDestinatario" required>
-                            {% for id in destinatarios %}
-                            <option value="{{destinatarios[id]}}">{{destinatarios[id]}}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="row my-2">
-                        <div class="col">
-                            <Label style="font-size: small;">Descrição</Label>
-                            <input class="form-control" type="text" name="editDescricao" id="editDescricao" required>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary mt-2" style="width: 100%;">Salvar Alterações</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-
-<!-- Primeiro Link para abrir o modal -->
-<div>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
-    <a href="#"
-        style="position:fixed;width:60px;height:60px;bottom:120px;right:40px;background-color:#FF4081;color:#FFF;border-radius:50px;text-align:center;font-size:35px;box-shadow: 1px 1px 2px #888; z-index:1000; cursor: pointer;"
-        data-toggle="modal" data-target="#destinatarioModal">
-        <img src="../static/img/do-utilizador.png" height="24px" width="24px">
-    </a>
-</div>
-
-<!-- Segundo Link para abrir o modal -->
-<div>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
-    <a href="#"
-        style="position:fixed;width:60px;height:60px;bottom:40px;right:40px;background-color:#FF4081;color:#FFF;border-radius:50px;text-align:center;font-size:35px;box-shadow: 1px 1px 2px #888; z-index:1000; cursor: pointer;"
-        data-toggle="modal" data-target="#lancamentoModal">
-        <span>+</span>
-    </a>
-</div>
-
-<!-- Bootstrap e jQuery (necessário para o modal funcionar) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-<!-- JavaScript para submeter o formulário automaticamente -->
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/formatarValor.js') }}"></script>
 <script>
-    document.getElementById('select-mes').addEventListener('change', function () {
-        document.getElementById('filtro-lancamentos').submit();
+  const novoLancamentoModalElement = document.getElementById("novoLancamentoModal");
+  const novoLancamentoForm = novoLancamentoModalElement?.querySelector("form");
+  const novoLancamentoDate = document.getElementById("modalDate");
+  const novoLancamentoAmount = document.getElementById("modalAmount");
+  const novoLancamentoCategoria = document.getElementById("modalCategoria");
+  const novoLancamentoEspecie = document.getElementById("modalEspecie");
+
+  const especieOptionsMap = {
+    pessoal: [
+      { value: "operacional", text: "Operacional" },
+      { value: "administrativo", text: "Administrativo" },
+    ],
+    publicidade: [
+      { value: "google ads", text: "Google Ads" },
+      { value: "meta", text: "Meta" },
+      { value: "radio", text: "Radio" },
+      { value: "tv", text: "TV" },
+    ],
+    escritorio: [
+      { value: "aluguel", text: "Aluguel" },
+      { value: "agua", text: "Agua" },
+      { value: "energia", text: "Energia" },
+      { value: "internet", text: "Internet" },
+      { value: "celular", text: "Celular" },
+      { value: "equipamentos", text: "Equipamentos" },
+    ],
+    comissao: [
+      { value: "operacional", text: "Operacional" },
+      { value: "administrativa", text: "Administrativa" },
+    ],
+    transporte: [
+      { value: "combustivel", text: "Combustivel" },
+      { value: "passagem", text: "Passagem" },
+    ],
+  };
+
+  function fillEspecieOptions() {
+    if (!novoLancamentoEspecie || !novoLancamentoCategoria) {
+      return;
+    }
+
+    novoLancamentoEspecie.innerHTML = "<option value=''>Selecione uma opcao</option>";
+    const options = especieOptionsMap[novoLancamentoCategoria.value] || [];
+
+    for (const optionData of options) {
+      const option = document.createElement("option");
+      option.value = optionData.value;
+      option.textContent = optionData.text;
+      novoLancamentoEspecie.appendChild(option);
+    }
+  }
+
+  if (novoLancamentoCategoria) {
+    novoLancamentoCategoria.addEventListener("change", fillEspecieOptions);
+  }
+
+  if (novoLancamentoAmount && typeof configurarFormatacaoValor === "function") {
+    configurarFormatacaoValor("modalAmount");
+  }
+
+  if (novoLancamentoModalElement) {
+    novoLancamentoModalElement.addEventListener("show.bs.modal", function () {
+      const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+      if (novoLancamentoDate && !novoLancamentoDate.value) {
+        novoLancamentoDate.value = today;
+      }
+      if (novoLancamentoAmount && !novoLancamentoAmount.value) {
+        novoLancamentoAmount.value = "0,00";
+      }
+      fillEspecieOptions();
     });
 
-    document.getElementById('select-ano').addEventListener('change', function () {
-        document.getElementById('filtro-lancamentos').submit();
+    novoLancamentoModalElement.addEventListener("hidden.bs.modal", function () {
+      if (novoLancamentoForm) {
+        novoLancamentoForm.reset();
+      }
+      if (novoLancamentoEspecie) {
+        novoLancamentoEspecie.innerHTML = "<option value=''>Selecione primeiro uma categoria</option>";
+      }
+      if (novoLancamentoAmount) {
+        novoLancamentoAmount.value = "";
+      }
     });
-</script>
-<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', (event) => {
-        // Usando Luxon para lidar com o fuso horário
-        const DateTime = luxon.DateTime;
+  }
 
-        // Obtenha a data atual no fuso horário de São Paulo
-        const nowInSaoPaulo = DateTime.now().setZone('America/Sao_Paulo');
+  const observationModal = new bootstrap.Modal(document.getElementById("observacaoModal"));
 
-        // Formate a data para 'YYYY-MM-DD'
-        const formattedDate = nowInSaoPaulo.toFormat('yyyy-MM-dd');
+  function openObservationModal(button) {
+    document.getElementById("obsTransactionId").value = button.dataset.id || "";
+    document.getElementById("obsDate").value = button.dataset.date || "";
+    document.getElementById("obsTexto").value = button.dataset.observacao || "";
+    observationModal.show();
+  }
 
-        // Obtenha o elemento de entrada da data
-        const dateInput = document.getElementById('date');
-
-        // Defina o valor do campo de data para a data atual em São Paulo
-        dateInput.value = formattedDate;
-    });
-</script>
-
-
-<script>
-    $('#deleteTransactionModal').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget); // Botão que acionou o modal
-        var id = button.data('id');
-        var date = button.data('date');
-
-        let parts = date.split('/');
-        let formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-
-        var modal = $(this);
-        modal.find('#deleteTransactionId').val(id);
-        modal.find('#deleteDate').val(formattedDate);
-
-    });
-</script>
-
-
-<script>
-    $('#editLancamentoModal').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget); // Botão que acionou o modal
-        var id = button.data('id');
-        var date = button.data('date');
-        var category = button.data('category');
-        var especie = button.data('especie');
-        var destinatario = button.data('destinatario');
-        var description = button.data('description');
-        var type = button.data('type');
-        var amount = button.data('amount');
-
-        var modal = $(this);
-        modal.find('#editTransactionId').val(id);
-        modal.find('#editDate').val(date);
-        modal.find('#editCategoria').val(category);
-        modal.find('#editEspecie').val(especie);
-        modal.find('#editDestinatario').val(destinatario);
-        modal.find('#editDescricao').val(description);
-        modal.find('#editTypeTransaction').val(type);
-        modal.find('#editAmount').val(amount);
-    });
-</script>
-<script>
-    const select1 = document.getElementById("categoria");
-    const select2 = document.getElementById("especie");
-
-    // Objeto que mapeia as opções
-    const optionsMap = {
-        "pessoal": [
-            { value: "operacional", text: "Operacional" },
-            { value: "administrativo", text: "Administrativo" }
-        ],
-        "publicidade": [
-            { value: "google ads", text: "Google ads" },
-            { value: "meta", text: "meta" },
-            { value: "rádio", text: "Rário" },
-            { value: "TV", text: "TV" },
-        ],
-        "escritório": [
-            { value: "aluguel", text: "Aluguel" },
-            { value: "água", text: "Água" },
-            { value: "energia", text: "Energia" },
-            { value: "internet", text: "Internet" },
-            { value: "celular", text: "Celular" },
-            { value: "equipamentos", text: "Equipamentos" },
-        ],
-        "comissão": [
-            { value: "operacional", text: "Operacional" },
-            { value: "administrativa", text: "Administrativa" },
-        ],
-        "transporte": [
-            { value: "combustível", text: "Combustível" },
-            { value: "passagem", text: "Passagem" },
-        ]
+  async function saveObservation() {
+    const payload = {
+      transaction_id: document.getElementById("obsTransactionId").value,
+      date: document.getElementById("obsDate").value,
+      observacao: document.getElementById("obsTexto").value,
     };
 
-    // Função que atualiza o segundo select com base na seleção do primeiro
-    select1.addEventListener("change", function () {
-        const selectedValue = select1.value;
-
-        // Limpa o segundo select
-        select2.innerHTML = "<option value=''>Selecione uma opção</option>";
-
-        // Se houver uma opção válida no primeiro select
-        if (optionsMap[selectedValue]) {
-            // Adiciona as novas opções no segundo select
-            optionsMap[selectedValue].forEach(option => {
-                const newOption = document.createElement("option");
-                newOption.value = option.value;
-                newOption.text = option.text;
-                select2.appendChild(newOption);
-            });
-        }
+    const response = await fetch("/salvar_observacao", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
+
+    if (!response.ok) {
+      alert("Nao foi possivel salvar a observacao.");
+      return;
+    }
+
+    window.location.reload();
+  }
 </script>
-
-<script>
-    const select3 = document.getElementById("editCategoria");
-    const select4 = document.getElementById("editEspecie");
-
-    // Objeto que mapeia as opções
-    const optionsMap1 = {
-        "pessoal": [
-            { value: "operacional", text: "Operacional" },
-            { value: "administrativo", text: "Administrativo" }
-        ],
-        "publicidade": [
-            { value: "google ads", text: "Google ads" },
-            { value: "meta", text: "meta" },
-            { value: "rádio", text: "Rário" },
-            { value: "TV", text: "TV" },
-        ],
-        "escritório": [
-            { value: "aluguel", text: "Aluguel" },
-            { value: "água", text: "Água" },
-            { value: "energia", text: "Energia" },
-            { value: "internet", text: "Internet" },
-            { value: "celular", text: "Celular" },
-            { value: "equipamentos", text: "Equipamentos" },
-        ],
-        "comissão": [
-            { value: "operacional", text: "Operacional" },
-            { value: "administrativa", text: "Administrativa" },
-        ],
-        "transporte": [
-            { value: "combustível", text: "Combustível" },
-            { value: "passagem", text: "Passagem" },
-        ]
-    };
-
-    // Função que atualiza o segundo select com base na seleção do primeiro
-    select3.addEventListener("change", function () {
-        const selectedValue = select3.value;
-
-        // Limpa o segundo select
-        select4.innerHTML = "<option value=''>Selecione uma opção</option>";
-
-        // Se houver uma opção válida no primeiro select
-        if (optionsMap1[selectedValue]) {
-            // Adiciona as novas opções no segundo select
-            optionsMap1[selectedValue].forEach(option => {
-                const newOption = document.createElement("option");
-                newOption.value = option.value;
-                newOption.text = option.text;
-                select4.appendChild(newOption);
-            });
-        }
-    });
-</script>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        configurarFormatacaoValor("amount"); // Substitua "amount" pelo ID do input que você quer formatar
-    });
-</script>
-
-
 {% endblock %}

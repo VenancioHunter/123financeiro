@@ -1,0 +1,1149 @@
+<!-- templates/layout.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Flask App{% endblock %}</title>
+    <!--<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background-image: linear-gradient(
+          to right,
+          rgb(240, 240, 240, 1),
+          rgb(240, 240, 240, 1)
+        );
+      }
+      .footer-fixed {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #222;
+        padding: 10px;
+        border-top: 1px solid #ddd;
+        text-align: center;
+        font-size: 14px;
+        z-index: 9999;
+      }
+    </style>
+    <link href="../static/css/popup.css" rel="stylesheet" />
+    <link href="../static/css/app.css" rel="stylesheet" />
+    <script src="../static/js/formatarValor.js"></script>
+    <style>
+      .orders-shell {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 24px 20px 110px;
+      }
+
+      .orders-hero {
+        background: linear-gradient(135deg, #0f3c64, #1d6fa5);
+        color: #fff;
+        border-radius: 22px;
+        padding: 28px;
+        margin-bottom: 22px;
+        box-shadow: 0 18px 40px rgba(15, 60, 100, 0.18);
+      }
+
+      .orders-hero h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 800;
+      }
+
+      .orders-hero p {
+        margin: 10px 0 0;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      .filter-card {
+        background: #fff;
+        border: 1px solid #dbe4ee;
+        border-radius: 18px;
+        padding: 22px;
+        box-shadow: 0 12px 28px rgba(14, 30, 37, 0.08);
+        margin-bottom: 18px;
+      }
+
+      .filter-label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: #0f3c64;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .btn-search {
+        min-height: 46px;
+        font-weight: 700;
+        border-radius: 12px;
+        background: #0f3c64;
+        border-color: #0f3c64;
+      }
+
+      .btn-search:hover {
+        background: #0b2f4f;
+        border-color: #0b2f4f;
+      }
+
+      .table-card {
+        background: #fff;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid #dbe4ee;
+        box-shadow: 0 12px 28px rgba(14, 30, 37, 0.08);
+      }
+
+      .table-card .table {
+        margin-bottom: 0;
+      }
+
+      .table-card thead th {
+        border-bottom: none;
+        white-space: nowrap;
+      }
+
+      .table-card tbody td {
+        vertical-align: middle;
+      }
+
+      .money-cell {
+        font-weight: 700;
+        color: #0f3c64;
+      }
+
+      .status-badge {
+        min-width: 108px;
+        display: inline-block;
+        text-align: center;
+        padding: 0.55rem 0.8rem;
+        font-size: 0.78rem;
+      }
+
+      .modal-card .modal-content {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(8, 24, 39, 0.2);
+      }
+
+      .modal-card .modal-header {
+        background: linear-gradient(135deg, #0f3c64, #1d6fa5);
+        color: #fff;
+        border-bottom: none;
+      }
+
+      .modal-card .modal-body {
+        padding: 24px;
+      }
+
+      .cost-box {
+        border: 1px solid #f4d7d7;
+        border-radius: 14px;
+        background: #fff7f7;
+      }
+
+      .footer-fixed {
+        background: rgba(9, 21, 31, 0.96);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      #osResumo {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      #osResumo span {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        padding: 8px 12px;
+      }
+
+      @media (max-width: 768px) {
+        .orders-shell {
+          padding: 18px 12px 120px;
+        }
+
+        .orders-hero {
+          padding: 20px;
+        }
+
+        .orders-hero h1 {
+          font-size: 1.55rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        {% if session.get('user') %} {% set user_role = session.get('role') %}
+        {% if user_role == 'user' %}
+        <a class="navbar-brand" href="">123 Caça Vazamentos</a>
+        {% endif %} {% if user_role == 'admin' %}
+        <a class="navbar-brand" href="/">123 Caça Vazamentos</a>
+        {% endif %} {% if user_role == 'tecnico' %}
+        <a class="navbar-brand" href="">123 Caça Vazamentos</a>
+        {% endif %}
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            {% if user_role == 'user' %}
+            <li class="nav-item">
+              <a class="nav-link" href="">Início</a>
+            </li>
+            {% endif %} {% if user_role == 'admin' %}
+            <li class="nav-item" hidden>
+              <a class="nav-link" href="">Usuários</a>
+            </li>
+            <li class="nav-item" hidden>
+              <a class="nav-link" href="">Adicionar Serviço</a>
+            </li>
+            <li class="nav-item" hidden>
+              <a class="nav-link" href="">Adicionar Cidade</a>
+            </li>
+            <li class="nav-item" hidden>
+              <a class="nav-link" href="">Vincular</a>
+            </li>
+            <li class="nav-item" hidden>
+              <a class="nav-link" href="">Consultar Atendimentos</a>
+            </li>
+            {% endif %} {% if user_role == 'tecnico' %}
+            <li class="nav-item">
+              <a class="nav-link" href="">Início</a>
+            </li>
+            {% endif %}
+
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('logout') }}">Sair</a>
+            </li>
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+    </nav>
+
+    <div class="orders-shell">
+      <section class="orders-hero">
+        <h1>Ordens de Serviço</h1>
+        <p>
+          Consulte, filtre e finalize OS com controle de recebimento e custos
+          operacionais.
+        </p>
+      </section>
+      <div class="filter-card">
+        <div class="row g-3">
+          <!-- Select Ano -->
+          <div class="col-md-3">
+            <label for="ano" class="filter-label">Ano</label>
+            <select id="ano" class="form-select">
+              <option value="2025">2025</option>
+              <option value="2026" selected>2026</option>
+            </select>
+          </div>
+
+          <!-- Select Mês -->
+          <div class="col-md-3">
+            <label for="mes" class="filter-label">Mês</label>
+            <select id="mes" class="form-select">
+              <option value="1">Janeiro</option>
+              <option value="2">Fevereiro</option>
+              <option value="3">Março</option>
+              <option value="4">Abril</option>
+              <option value="5">Maio</option>
+              <option value="6">Junho</option>
+              <option value="7">Julho</option>
+              <option value="8">Agosto</option>
+              <option value="9">Setembro</option>
+              <option value="10">Outubro</option>
+              <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+            </select>
+          </div>
+
+          <!-- Botão -->
+          <div class="col-md-3 d-flex align-items-end">
+            <button id="btnBuscar" class="btn btn-primary btn-search w-100">
+              Buscar Ordens
+            </button>
+          </div>
+        </div>
+
+        <!-- Subfiltros -->
+        <div class="row g-3 mt-1">
+          <!-- Cidade -->
+          <div class="col-md-3">
+            <label for="filtroCidade" class="filter-label">Cidade</label>
+            <select id="filtroCidade" class="form-select">
+              <option value="">Todas</option>
+            </select>
+          </div>
+
+          <!-- Técnico -->
+          <div class="col-md-3">
+            <label for="filtroTecnico" class="filter-label">Técnico</label>
+            <select id="filtroTecnico" class="form-select">
+              <option value="">Todos</option>
+            </select>
+          </div>
+
+          <!-- Status -->
+          <div class="col-md-3">
+            <label for="filtroStatus" class="filter-label">Status</label>
+            <select id="filtroStatus" class="form-select">
+              <option value="">Todos</option>
+              <option value="recebido">Recebido</option>
+              <option value="cancelada">Cancelada</option>
+              <option value="pendente">Pendente</option>
+              <option value="aguardando">Aguardando</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="table-card">
+        <div class="table-responsive">
+      <table class="table table-dark table-striped align-middle" id="tabela-os">
+        <thead>
+          <tr>
+            <th>Número OS</th>
+            <th>Cliente</th>
+            <th>Telefone</th>
+            <th>Cidade</th>
+            <th>Serviço</th>
+            <th>Técnico</th>
+            <th>Valor</th>
+            <th>Time Stamp</th>
+            <th>Início</th>
+            <th>Fim</th>
+            <th>Observação</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="paymentModal"
+      tabindex="-1"
+      aria-labelledby="paymentModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg modal-card">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="paymentModalLabel">
+              Selecione a Forma de Pagamento
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="payment-method" class="filter-label">Método de Pagamento</label>
+              <select
+                class="form-control"
+                id="payment-method"
+                onchange="togglePaymentOptions()"
+              >
+                <option value="">Selecione</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="pix">PIX</option>
+                <option value="cartao">Cartão de Crédito</option>
+                <option value="boleto">Boleto</option>
+              </select>
+            </div>
+            <!-- Campos Dinâmicos -->
+            <div id="payment-options">
+              <!-- Dinheiro / PIX -->
+              <div id="input-amount" class="form-group mt-3 d-none">
+                <label for="amount">Valor Total Recebido</label>
+                <input
+                  type="tel"
+                  class="form-control"
+                  id="amount"
+                  placeholder="Insira o valor"
+                />
+                <div class="my-4">
+                  <label style="font-size: small; font-weight: bold"
+                    >Confirmação de Recebimento</label
+                  >
+                  <div>
+                    <input
+                      type="radio"
+                      id="received"
+                      name="paymentStatus"
+                      value="received"
+                      required
+                    />
+                    <label for="received">Recebido</label>
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      id="not-received"
+                      name="paymentStatus"
+                      value="notreceived"
+                    />
+                    <label for="not-received">Não Recebido</label>
+                  </div>
+                </div>
+              </div>
+              <!-- Cartão de Crédito -->
+              <div id="credit-card-options" class="form-group mt-3 d-none">
+                <label for="card-valor">Valor Total Recebido</label>
+                <input
+                  type="tel"
+                  class="form-control"
+                  id="card-valor"
+                  placeholder="Insira o valor"
+                />
+                <label for="installments" class="mt-3">Parcelas</label>
+                <select class="form-control" id="installments">
+                  <option value="1">1x</option>
+                  <option value="2">2x</option>
+                  <option value="3">3x</option>
+                  <option value="4">4x</option>
+                  <option value="5">5x</option>
+                  <option value="6">6x</option>
+                  <option value="7">7x</option>
+                  <option value="8">8x</option>
+                  <option value="9">9x</option>
+                  <option value="10">10x</option>
+                  <!-- Adicione mais opções de parcelas se necessário -->
+                </select>
+                <div class="my-4">
+                  <label style="font-size: small; font-weight: bold"
+                    >Confirmação de Recebimento</label
+                  >
+
+                  <div>
+                    <input
+                      type="radio"
+                      id="received-cartao"
+                      name="paymentStatus"
+                      value="received"
+                      required
+                    />
+                    <label for="received-cartao">Recebido</label>
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      id="not-received-cartao"
+                      name="paymentStatus"
+                      value="notreceived"
+                    />
+                    <label for="not-received-cartao">Não Recebido</label>
+                  </div>
+                </div>
+              </div>
+              <!-- Boleto -->
+              <div id="boleto-options" class="form-group mt-3 d-none">
+                <label for="boleto-valor">Valor a Receber</label>
+                <input
+                  type="tel"
+                  class="form-control"
+                  id="boleto-valor"
+                  placeholder="Insira o valor"
+                />
+                <label for="boleto-date" class="mt-3">Data de Vencimento</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  id="boleto-date"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label for="taxa-service" class="filter-label">Taxa do PIX ou cartão</label>
+              <input
+                type="tel"
+                class="form-control"
+                id="taxa"
+                placeholder="Insira o valor"
+              />
+            </div>
+
+            <div class="mt-4 p-3 cost-box">
+              <div>
+                <label for="outros-custos-service"
+                  ><strong>Custos do Serviço </strong></label
+                >
+                <input
+                  type="tel"
+                  class="form-control"
+                  id="outros-custos-service"
+                  placeholder="Insira o valor"
+                />
+              </div>
+              <div class="form-group mt-3">
+                <label for="observacao-service"
+                  ><strong>Observação</strong></label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="observacao-service"
+                  placeholder="Insira uma observação"
+                />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                onclick="savePayment(this)"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer-fixed">
+      <div id="osResumo"></div>
+    </footer>
+
+    <!-- Overlay para bloquear a tela de fundo -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Pop-up -->
+    <div class="popup" id="popup" align="center">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div>
+        <span>Aguarde...</span>
+      </div>
+    </div>
+
+    <script>
+      function parseBrazilianMoney(value) {
+        if (value === null || value === undefined || value === "") return 0;
+
+        const rawValue = String(value).trim().replace(/\s/g, "");
+        const normalized = rawValue.includes(",")
+          ? rawValue.replace(/\./g, "").replace(",", ".")
+          : rawValue;
+
+        const parsed = parseFloat(normalized);
+        return Number.isNaN(parsed) ? 0 : parsed;
+      }
+
+      function mostrarPopup() {
+        var overlay = document.getElementById("overlay");
+        var popup = document.getElementById("popup");
+
+        overlay.style.display = "block";
+        popup.style.display = "block";
+
+        // Bloqueia a interação com a tela de fundo
+        overlay.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+      }
+
+      function fecharPopup() {
+        var overlay = document.getElementById("overlay");
+        var popup = document.getElementById("popup");
+
+        overlay.style.display = "none";
+        popup.style.display = "none";
+      }
+    </script>
+
+    <script>
+      let ordensCache = []; // cache global das ordens
+
+      function preencherFiltros(ordens) {
+        const cidades = [
+          ...new Set(
+            ordens.map((os) => os.city || os.cidade || "").filter(Boolean)
+          ),
+        ].sort();
+        const tecnicos = [
+          ...new Set(ordens.map((os) => os.tecnico_nome || "Sem Técnico")),
+        ];
+
+        const filtroCidade = document.getElementById("filtroCidade");
+        const filtroTecnico = document.getElementById("filtroTecnico");
+
+        filtroCidade.innerHTML = '<option value="">Todas</option>';
+        cidades.forEach((cidade) => {
+          filtroCidade.innerHTML += `<option value="${cidade}">${cidade}</option>`;
+        });
+
+        filtroTecnico.innerHTML = '<option value="">Todos</option>';
+        tecnicos.forEach((tec) => {
+          filtroTecnico.innerHTML += `<option value="${tec}">${tec}</option>`;
+        });
+      }
+
+      function renderTabela() {
+        const tbody = document.querySelector("#tabela-os tbody");
+        tbody.innerHTML = "";
+
+        const filtroCidade = document.getElementById("filtroCidade").value;
+        const filtroTecnico = document.getElementById("filtroTecnico").value;
+        const filtroStatus = document.getElementById("filtroStatus").value;
+
+        const filtradas = ordensCache.filter((os) => {
+          return (
+            (filtroCidade === "" || os.city === filtroCidade) &&
+            (filtroTecnico === "" || os.tecnico_nome === filtroTecnico) &&
+            (filtroStatus === "" || os.status === filtroStatus)
+          );
+        });
+
+        let resumo = {
+          total: 0,
+          aguardando: { count: 0, valor: 0 },
+          recebido: { count: 0, valor: 0 },
+          pendente: { count: 0, valor: 0 },
+          cancelada: { count: 0, valor: 0 },
+        };
+
+        filtradas.forEach((os) => {
+          const tr = document.createElement("tr");
+          const cidade = os.city || os.cidade || "";
+          const statusAtual = (os.status || "aguardando").toLowerCase();
+          const podeFinalizar = statusAtual === "aguardando"; /*||
+            os.status?.toLowerCase() === "pendente"*/
+          const valor = parseBrazilianMoney(os.newprice);
+
+          // >>> CORREÇÃO AQUI <<<
+          const statusKey = statusAtual;
+          if (resumo[statusKey]) {
+            resumo[statusKey].count++;
+            resumo[statusKey].valor += valor;
+          } else {
+            // Se vier algum status diferente, contabiliza em 'aguardando' ou crie um bucket 'outros'
+            // Aqui vamos criar 'outros' para não perder nada.
+            if (!resumo.outros) resumo.outros = { count: 0, valor: 0 };
+            resumo.outros.count++;
+            resumo.outros.valor += valor;
+          }
+          resumo.total++;
+
+          tr.innerHTML = `
+        <td>${os.numero_os || ""}</td>
+        <td>${os.name}</td>
+        <td>${os.phone}</td>
+        <td>${cidade}</td>
+        <td>${os.service}</td>
+        <td>${os.tecnico_nome || "Sem Técnico"}</td>
+        <td class="money-cell">R$ ${valor.toFixed(2)}</td>
+        <td>${formatarData(os.timestamp)}</td>
+        <td>${formatarDataHora(os.start_datetime)}</td>
+        <td>${formatarDataHora(os.end_datetime)}</td>
+        <td>${os.motivo_cancelamento || ""}</td>
+        <td>
+          <span class="badge status-badge ${
+            statusAtual === "recebido"
+              ? "bg-success"
+              : statusAtual === "cancelada"
+              ? "bg-danger"
+              : statusAtual === "pendente"
+              ? "bg-primary"
+              : "bg-warning"
+          }" style="text-transform: capitalize;">
+            ${os.status || "Aguardando"}
+          </span>
+        </td>
+        <td>
+    ${
+      podeFinalizar
+        ? `<button class="btn btn-sm btn-success finalizar-btn"
+            type="button"
+            onclick="openPaymentModal(this)"
+            data-id="${os.id_os}"
+            data-date="${os.start_datetime}"
+            data-city="${cidade}"
+            data-numero="${os.numero_os}"
+            data-name="${os.name}"
+            data-price="${os.newprice}"
+            data-service="${os.service}"
+            data-tecnico="${os.tecnico_id}">
+            Finalizar OS
+         </button>`
+        : ""
+    }
+  </td>
+      `;
+          tbody.appendChild(tr);
+        });
+
+        const resumoDiv = document.getElementById("osResumo");
+        resumoDiv.innerHTML = `
+  <span style="color: white;"><strong>Total:</strong> ${
+    resumo.total
+  } OSs</span>  |
+  <span style="color: orange;"><strong>Aguardando:</strong> ${
+    resumo.aguardando.count
+  } (R$ ${resumo.aguardando.valor.toFixed(2)})</span> |
+  <span style="color: green;"><strong>Recebido:</strong> ${
+    resumo.recebido.count
+  } (R$ ${resumo.recebido.valor.toFixed(2)})</span> |
+  <span style="color: blue;"><strong>Pendente:</strong> ${
+    resumo.pendente.count
+  } (R$ ${resumo.pendente.valor.toFixed(2)})</span> |
+  <span style="color: red;"><strong>Cancelada:</strong> ${
+    resumo.cancelada.count
+  } (R$ ${resumo.cancelada.valor.toFixed(2)})</span>
+`;
+      }
+
+      document
+        .getElementById("btnBuscar")
+        .addEventListener("click", function () {
+          const ano = document.getElementById("ano").value;
+          const mes = document.getElementById("mes").value;
+          mostrarPopup();
+          fetch("/buscar_ordens", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ano: ano, mes: mes }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              ordensCache = data.ordens || [];
+              preencherFiltros(ordensCache);
+              renderTabela();
+            })
+            .finally(() => {
+              fecharPopup();
+            })
+            .catch((error) => console.error("Erro:", error));
+        });
+
+      // eventos para subfiltros
+      document
+        .getElementById("filtroCidade")
+        .addEventListener("change", renderTabela);
+      document
+        .getElementById("filtroTecnico")
+        .addEventListener("change", renderTabela);
+      document
+        .getElementById("filtroStatus")
+        .addEventListener("change", renderTabela);
+    </script>
+    <script>
+      function formatarData(timestamp) {
+        if (!timestamp) return "";
+
+        // Garante que seja número
+        const ts = parseFloat(timestamp) * 1000;
+        const data = new Date(ts);
+
+        // Formatar como dd/mm/yyyy HH:MM
+        const dia = String(data.getDate()).padStart(2, "0");
+        const mes = String(data.getMonth() + 1).padStart(2, "0");
+        const ano = data.getFullYear();
+        const horas = String(data.getHours()).padStart(2, "0");
+        const minutos = String(data.getMinutes()).padStart(2, "0");
+
+        return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
+      }
+
+      function formatarDataHora(dataHoraStr) {
+        if (!dataHoraStr) return "";
+
+        // Quebra a string em [data, hora]
+        const [data, hora = ""] = dataHoraStr.split(" ");
+        const [ano, mes, dia] = data.split("-");
+
+        return `${dia}/${mes}/${ano} ${hora}`;
+      }
+
+      function togglePaymentOptions() {
+        var method = document.getElementById("payment-method").value;
+
+        // Esconde todas as opções
+        document.getElementById("input-amount").classList.add("d-none");
+        document.getElementById("credit-card-options").classList.add("d-none");
+        document.getElementById("boleto-options").classList.add("d-none");
+
+        // Mostra o campo de acordo com a seleção
+        if (method === "dinheiro" || method === "pix") {
+          document.getElementById("input-amount").classList.remove("d-none");
+        } else if (method === "cartao") {
+          document
+            .getElementById("credit-card-options")
+            .classList.remove("d-none");
+        } else if (method === "boleto") {
+          document.getElementById("boleto-options").classList.remove("d-none");
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        configurarFormatacaoValor("amount");
+
+        configurarFormatacaoValor("taxa");
+        configurarFormatacaoValor("outros-custos-service");
+        configurarFormatacaoValor("card-valor");
+        configurarFormatacaoValor("boleto-valor");
+      });
+    </script>
+
+    <script>
+      function getSelectedPaymentStatus() {
+        var selectedOption = document.querySelector(
+          'input[name="paymentStatus"]:checked'
+        );
+        if (selectedOption) {
+          return selectedOption.value;
+        } else {
+          return null; // Caso nenhuma opção esteja selecionada
+        }
+      }
+
+      document.querySelectorAll(".finalizar-btn").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const os = JSON.parse(this.getAttribute("data-os"));
+          preencherModalOS(os);
+        });
+      });
+
+      /*function preencherModalOS(os) {
+        // Aqui você coloca os dados da OS nos campos do modal
+        document.getElementById("amount").value = os.newprice || "";
+        document.getElementById("card-valor").value = os.newprice || "";
+        document.getElementById("boleto-valor").value = os.newprice || "";
+
+        document.getElementById("observacao-service").value =
+          os.motivo_cancelamento || "";
+
+        // Você pode até mudar o título do modal para contextualizar
+        document.getElementById(
+          "paymentModalLabel"
+        ).innerText = `Finalizar OS #${os.numero_os} - ${os.name}`;
+
+        // Se quiser guardar o ID da OS para salvar depois
+        document
+          .getElementById("paymentModal")
+          .setAttribute("data-id", os.id_os);
+      }*/
+
+      // Guardar referência ao botão que abriu o modal
+      function clearBootstrapModalArtifacts() {
+        document.body.classList.remove("modal-open");
+        document
+          .querySelectorAll(".modal-backdrop")
+          .forEach((el) => el.remove());
+        document.body.style.removeProperty("overflow");
+        document.body.style.removeProperty("padding-right");
+      }
+
+      function openPaymentModal(button) {
+        clearBootstrapModalArtifacts();
+        paymentModal.relatedButton = button;
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(paymentModal);
+        modalInstance.show();
+      }
+
+      const paymentModal = document.getElementById("paymentModal");
+      paymentModal.addEventListener("show.bs.modal", function (event) {
+        const triggerBtn = event.relatedTarget || paymentModal.relatedButton;
+        paymentModal.relatedButton = triggerBtn;
+        if (!triggerBtn) return;
+
+        const serviceAmount = triggerBtn.dataset.price || "0,00";
+        document.getElementById("paymentModalLabel").innerText =
+          `Finalizar OS #${triggerBtn.dataset.numero || ""} - ${triggerBtn.dataset.name || ""}`;
+        document.getElementById("amount").value = serviceAmount;
+        document.getElementById("card-valor").value = serviceAmount;
+        document.getElementById("boleto-valor").value = serviceAmount;
+        document.getElementById("taxa").value = "0,00";
+        document.getElementById("outros-custos-service").value = "0,00";
+        document.getElementById("observacao-service").value = "";
+        document.getElementById("payment-method").selectedIndex = 0;
+        document.querySelectorAll('input[name="paymentStatus"]').forEach((el) => {
+          el.checked = false;
+        });
+        document.getElementById("boleto-date").value = "";
+        togglePaymentOptions();
+      });
+
+      function resetPaymentModalState() {
+        document.getElementById("paymentModalLabel").innerText =
+          "Selecione a Forma de Pagamento";
+        document.getElementById("amount").value = "";
+        document.getElementById("card-valor").value = "";
+        document.getElementById("boleto-valor").value = "";
+        document.getElementById("boleto-date").value = "";
+        document.getElementById("taxa").value = "0,00";
+        document.getElementById("outros-custos-service").value = "0,00";
+        document.getElementById("observacao-service").value = "";
+        document.getElementById("installments").selectedIndex = 0;
+        document.getElementById("payment-method").selectedIndex = 0;
+        document.querySelectorAll('input[name="paymentStatus"]').forEach((el) => {
+          el.checked = false;
+        });
+        paymentModal.relatedButton = null;
+        togglePaymentOptions();
+      }
+
+      paymentModal.addEventListener("hidden.bs.modal", function () {
+        resetPaymentModalState();
+        clearBootstrapModalArtifacts();
+      });
+
+      function savePayment(button) {
+        const modal = document.getElementById("paymentModal");
+        const triggerBtn = modal.relatedButton;
+
+        const os_numero = triggerBtn.dataset.numero;
+        const os_id = triggerBtn.dataset.id;
+        const os_id_tecnico = triggerBtn.dataset.tecnico;
+        const os_city = triggerBtn.dataset.city;
+        const os_date = triggerBtn.dataset.date;
+        const os_value_service = triggerBtn.dataset.price;
+        const os_type_service = triggerBtn.dataset.service;
+
+        var method = document.getElementById("payment-method").value;
+        var amount = document.getElementById("amount").value;
+        var cardValor = document.getElementById("card-valor").value;
+        var taxa = document.getElementById("taxa").value;
+        var installments = document.getElementById("installments").value;
+        var boletoValor = document.getElementById("boleto-valor").value;
+        var boletoDate = document.getElementById("boleto-date").value;
+        var outrosCustosService = document.getElementById(
+          "outros-custos-service"
+        ).value;
+        var observacaoService =
+          document.getElementById("observacao-service").value;
+        var status = getSelectedPaymentStatus();
+
+        if (!os_id) {
+          alert("Erro: ID do serviço não encontrado.");
+          return;
+        }
+
+        if (!amount && !cardValor && !boletoValor) {
+          alert("Erro: Preencha o valor recebido.");
+          return;
+        }
+
+        if (method == "boleto") {
+          status = "notreceived";
+        }
+
+        if (!status) {
+          alert("Erro: Confirme o RECEBIMENTO.");
+          return;
+        }
+
+        if (
+          parseBrazilianMoney(amount) > parseBrazilianMoney(os_value_service) ||
+          parseBrazilianMoney(cardValor) > parseBrazilianMoney(os_value_service) ||
+          parseBrazilianMoney(boletoValor) > parseBrazilianMoney(os_value_service)
+        ) {
+          console.log(cardValor, os_value_service);
+          alert("O valor informado não pode ser maior que o valor da OS.");
+          return;
+        }
+
+        if (
+          parseBrazilianMoney(outrosCustosService) >
+          parseBrazilianMoney(os_value_service)
+        ) {
+          alert(
+            "O valor dos custos do serviço não pode ser maior que o valor da OS."
+          );
+          return;
+        }
+
+        if (parseBrazilianMoney(outrosCustosService) > 0 && !observacaoService) {
+          alert("Informe destalhes dos custos no campo OBSERVAÇÃO.");
+          return;
+        }
+
+        // Você coleta os outros campos de acordo com o método escolhido...
+        const data = {
+          os_numero: os_numero,
+          os_id: os_id,
+          os_id_tecnico: os_id_tecnico,
+          os_city: os_city,
+          os_date: os_date,
+          os_value_service: os_value_service,
+          os_type_serve: os_type_service,
+          method: method,
+          amount: amount,
+          taxa: taxa,
+          cardValor: cardValor,
+          installments: installments,
+          boletoValor: boletoValor,
+          boletoDate: boletoDate,
+          outrosCustosService: outrosCustosService,
+          observacaoService: observacaoService,
+          statusPaymment: status,
+        };
+
+        console.log("Dados para salvar:", data);
+        mostrarPopup();
+        fetch("/finalizar_os", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        })
+          .then((res) => res.json())
+          .then((dataRes) => {
+            if (dataRes.success) {
+              // Atualiza a linha da tabela sem precisar recarregar tudo
+              const row = triggerBtn.closest("tr");
+              if (row) {
+                // Atualiza a célula de status
+                const statusCell = row.querySelector("td:nth-child(12) span");
+                const newStatus =
+                  dataRes.new_status ||
+                  (status === "notreceived" ? "pendente" : "recebido");
+                statusCell.textContent =
+                  newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+
+                // Define a cor do badge
+                let badgeClass = "bg-warning";
+                if (newStatus === "recebido") badgeClass = "bg-success";
+                else if (newStatus === "cancelada") badgeClass = "bg-danger";
+                else if (newStatus === "pendente") badgeClass = "bg-primary";
+                statusCell.className = `badge status-badge ${badgeClass}`;
+
+                // Remove botão "Finalizar OS"
+                const actionCell = row.querySelector("td:last-child");
+                actionCell.innerHTML = "";
+              }
+
+              // Fecha modal corretamente
+              var modalEl = document.getElementById("paymentModal");
+              var modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+              // remove o foco antes de fechar
+              document.activeElement.blur();
+              modalInstance.hide();
+              fecharPopup();
+              return;
+
+              modalEl.addEventListener(
+                "hidden.bs.modal",
+                function () {
+                  document.body.classList.remove("modal-open");
+                  document
+                    .querySelectorAll(".modal-backdrop")
+                    .forEach((el) => el.remove());
+                  document.body.style.removeProperty("overflow");
+                  document.body.style.removeProperty("padding-right");
+
+                  // 🔹 Limpa todos os campos do modal
+                  modalEl
+                    .querySelectorAll("input, select, textarea")
+                    .forEach((el) => {
+                      if (el.type === "radio" || el.type === "checkbox") {
+                        el.checked = false;
+                      } else {
+                        el.value = "";
+                      }
+                    });
+
+                  // opcional: reseta também selects para a primeira opção
+                  modalEl.querySelectorAll("select").forEach((sel) => {
+                    sel.selectedIndex = 0;
+                  });
+
+                  document.body.focus();
+                },
+                { once: true }
+              );
+              fecharPopup();
+            } else {
+              fecharPopup();
+              alert("Erro ao finalizar OS: " + dataRes.error);
+            }
+          })
+          .catch((err) => {
+            fecharPopup();
+            console.error("Erro:", err);
+            alert("Erro ao finalizar OS.");
+          });
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+    <script>
+      const { DateTime } = luxon;
+      const nowInSaoPaulo = DateTime.now().setZone("America/Sao_Paulo");
+      const mesAtual = nowInSaoPaulo.month;
+      const anoAtual = String(nowInSaoPaulo.year);
+      document.getElementById("mes").value = mesAtual;
+      document.getElementById("ano").value = anoAtual;
+      document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("btnBuscar").click();
+      });
+    </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+      integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+      integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>

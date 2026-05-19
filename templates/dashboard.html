@@ -1,0 +1,337 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard Financeiro{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <span class="eyebrow">Dashboard financeiro</span>
+  <h1>Visao profissional do caixa, do resultado e dos compromissos.</h1>
+  <p>
+    Acompanhe o realizado, projete o saldo futuro e reduza pontos cegos entre
+    financeiro, OS e operacao.
+  </p>
+  <div class="page-hero-actions">
+    <a class="btn btn-light" href="{{ url_for('fluxo_caixa', ano=ano, mes=mes) }}">
+      Abrir fluxo de caixa
+    </a>
+    <a class="btn btn-soft" href="{{ url_for('novo_lancamento') }}">
+      Registrar movimento
+    </a>
+  </div>
+</section>
+
+<section class="surface-card" style="margin-bottom: 20px;">
+  <form class="filter-bar" method="get" action="{{ url_for('dashboard') }}">
+    <div class="field">
+      <label for="mes">Mes de analise</label>
+      <select class="form-select" id="mes" name="mes">
+        {% for numero_mes, nome_mes in meses.items() %}
+        <option value="{{ numero_mes }}" {% if numero_mes == mes %}selected{% endif %}>
+          {{ nome_mes }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="ano">Ano</label>
+      <select class="form-select" id="ano" name="ano">
+        {% for ano_opcao in anos %}
+        <option value="{{ ano_opcao }}" {% if ano_opcao == ano %}selected{% endif %}>
+          {{ ano_opcao }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <button class="btn btn-primary w-100" type="submit">Atualizar leitura</button>
+    </div>
+  </form>
+</section>
+
+<section class="kpi-grid">
+  <article class="kpi-card kpi-blue">
+    <span class="eyebrow">Saldo atual</span>
+    <div class="kpi-value">{{ saldo_atual_display }}</div>
+    <div class="kpi-support">Caixa consolidado do financeiro.</div>
+  </article>
+  <article class="kpi-card kpi-green">
+    <span class="eyebrow">Saldo projetado</span>
+    <div class="kpi-value">{{ saldo_projetado_display }}</div>
+    <div class="kpi-support">Caixa somado ao pipeline previsto.</div>
+  </article>
+  <article class="kpi-card kpi-amber">
+    <span class="eyebrow">A receber</span>
+    <div class="kpi-value">{{ receber_pendente_display }}</div>
+    <div class="kpi-support">{{ pending_count }} OS pendentes no funil financeiro.</div>
+  </article>
+  <article class="kpi-card kpi-rose">
+    <span class="eyebrow">Compromissos atrasados</span>
+    <div class="kpi-value">{{ compromissos_atrasados_display }}</div>
+    <div class="kpi-support">Titulos programados vencidos sem baixa.</div>
+  </article>
+</section>
+
+<div class="split-layout">
+  <section class="stack-grid">
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Resultado do periodo</span>
+          <h3>{{ month_name }}/{{ ano }}</h3>
+          <p>Leitura realizada do mes para fechar caixa, resultado e volume.</p>
+        </div>
+      </div>
+      <div class="metric-list">
+        <div class="metric-row">
+          <strong>{{ summary.receita_display }}</strong>
+          <span>Receitas realizadas</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.despesas_display }}</strong>
+          <span>Despesas realizadas</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.resultado_display }}</strong>
+          <span>Resultado do mes</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ summary.closing_balance_display }}</strong>
+          <span>Saldo de fechamento</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Tendencia</span>
+          <h3>Evolucao dos ultimos 6 meses</h3>
+          <p>Comparativo visual do resultado mensal para leitura gerencial.</p>
+        </div>
+      </div>
+      <div class="trend-bars">
+        {% for item in monthly_trend %}
+        <div class="trend-bar">
+          <strong>{{ item.label }}</strong>
+          <div class="trend-track">
+            <div
+              class="trend-fill {% if item.is_positive %}positive{% else %}negative{% endif %}"
+              style="width: {{ item.bar_size }}%;"
+            ></div>
+          </div>
+          <span class="{% if item.is_positive %}amount-positive{% else %}amount-negative{% endif %}">
+            {{ item.resultado_display }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Leitura por categoria</span>
+          <h3>Onde o dinheiro esta entrando e saindo</h3>
+        </div>
+      </div>
+      {% if top_categories %}
+      <div class="data-table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Entradas</th>
+              <th>Saidas</th>
+              <th>Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in top_categories %}
+            <tr>
+              <td>{{ item.name }}</td>
+              <td class="amount-positive">{{ item.credit_display }}</td>
+              <td class="amount-negative">{{ item.debit_display }}</td>
+              <td class="{% if item.total >= 0 %}amount-positive{% else %}amount-negative{% endif %}">
+                {{ item.total_display }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">Ainda nao ha categorias suficientes para analise.</div>
+      {% endif %}
+    </article>
+  </section>
+
+  <aside class="stack-grid">
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Operacao</span>
+          <h3>Indicadores de suporte</h3>
+        </div>
+      </div>
+      <div class="metric-list">
+        <div class="metric-row">
+          <strong>{{ confirmed_current_month_display }}</strong>
+          <span>{{ confirmed_current_month_count }} OS confirmadas no mes</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ compromissos_futuros_display }}</strong>
+          <span>Compromissos programados a liquidar</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ city_count }}</strong>
+          <span>Cidades cadastradas no ecossistema</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ service_count }}</strong>
+          <span>Servicos ativos no catalogo</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Fila de recebimento</span>
+          <h3>Valores pendentes por tecnico</h3>
+        </div>
+      </div>
+      {% if pending_by_technician %}
+      <div class="trend-bars">
+        {% for item in pending_by_technician %}
+        <div class="metric-row">
+          <strong>{{ item.tecnico }}</strong>
+          <span>{{ item.quantidade }} OS | {{ item.total_display }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">Nenhuma OS pendente neste momento.</div>
+      {% endif %}
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Movimentos recentes</span>
+          <h3>Ultimos registros financeiros</h3>
+        </div>
+      </div>
+      {% if recent_transactions %}
+      <div class="data-table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descricao</th>
+              <th>Tipo</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in recent_transactions %}
+            <tr>
+              <td class="nowrap">{{ item.date_label }}</td>
+              <td>{{ item.description or item.category }}</td>
+              <td>
+                <span class="pill {% if item.type == 'c' %}positive{% else %}negative{% endif %}">
+                  {{ item.type_label }}
+                </span>
+              </td>
+              <td class="{% if item.type == 'c' %}amount-positive{% else %}amount-negative{% endif %}">
+                {{ item.amount_display }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">Ainda nao ha movimentos recentes para exibir.</div>
+      {% endif %}
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Configuracao</span>
+          <h3>Cadastrar nova cidade</h3>
+          <p>Alimente o cadastro base sem depender de manutencao manual no banco.</p>
+        </div>
+      </div>
+      <form id="formCidade" class="quick-form">
+        <div>
+          <label for="cidadeNome">Nome da cidade</label>
+          <input
+            type="text"
+            class="form-control"
+            id="cidadeNome"
+            name="cidadeNome"
+            placeholder="Ex.: Goiania"
+            required
+          />
+        </div>
+        <button type="submit" class="btn btn-primary" id="btnSalvarCidade">
+          Salvar cidade
+        </button>
+      </form>
+      <div id="cidadeAlert" class="mt-3 d-none"></div>
+    </article>
+  </aside>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const form = document.getElementById("formCidade");
+    const input = document.getElementById("cidadeNome");
+    const alertBox = document.getElementById("cidadeAlert");
+    const btnSalvar = document.getElementById("btnSalvarCidade");
+
+    if (!form) return;
+
+    function showAlert(type, msg) {
+      alertBox.className = `pill mt-3 ${type === "success" ? "positive" : "negative"}`;
+      alertBox.textContent = msg;
+      alertBox.classList.remove("d-none");
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const cidade = (input.value || "").trim().replace(/\s+/g, " ");
+      if (!cidade) return;
+
+      btnSalvar.disabled = true;
+      btnSalvar.textContent = "Salvando...";
+
+      try {
+        const response = await fetch("/analytics/unidades/cidades", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cidade }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          showAlert("error", data.error || "Nao foi possivel salvar a cidade.");
+          return;
+        }
+
+        showAlert("success", data.message || "Cidade cadastrada com sucesso.");
+        input.value = "";
+      } catch (error) {
+        showAlert("error", "Falha de conexao. Tente novamente.");
+      } finally {
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = "Salvar cidade";
+      }
+    });
+  })();
+</script>
+{% endblock %}

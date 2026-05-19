@@ -1,0 +1,344 @@
+{% extends "layout.html" %}
+
+{% block title %}Analise Financeira{% endblock %}
+
+{% block content %}
+<div class="analysis-page">
+  <section class="page-hero">
+    <span class="eyebrow">Inteligencia financeira</span>
+    <h1>Lucro futuro, DRE gerencial e leitura avancada da operacao.</h1>
+    <p>
+      Antecipe lucro, acompanhe o orcamento e veja onde cada cidade e tecnico
+      estao contribuindo para o resultado.
+    </p>
+    <div class="page-hero-actions">
+      <a class="btn btn-light" href="{{ url_for('dashboard', ano=ano, mes=mes) }}">Voltar ao dashboard</a>
+      <a class="btn btn-soft" href="{{ url_for('fluxo_caixa', ano=ano, mes=mes) }}">Abrir fluxo de caixa</a>
+    </div>
+  </section>
+
+  <section class="surface-card analysis-toolbar-card">
+    <form class="filter-bar" method="get" action="{{ url_for('analise_financeira') }}">
+      <div class="field">
+        <label for="mes">Mes de analise</label>
+        <select class="form-select" id="mes" name="mes">
+          {% for numero_mes, nome_mes in meses.items() %}
+          <option value="{{ numero_mes }}" {% if numero_mes == mes %}selected{% endif %}>
+            {{ nome_mes }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="ano">Ano</label>
+        <select class="form-select" id="ano" name="ano">
+          {% for ano_opcao in anos %}
+          <option value="{{ ano_opcao }}" {% if ano_opcao == ano %}selected{% endif %}>
+            {{ ano_opcao }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <button class="btn btn-primary w-100" type="submit">Atualizar analise</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="kpi-grid">
+  <article class="kpi-card kpi-green">
+    <span class="eyebrow">Lucro operacional</span>
+    <div class="kpi-value">{{ operating_profit_display }}</div>
+    <div class="kpi-support">Resultado efetivo do caixa no periodo.</div>
+  </article>
+  <article class="kpi-card kpi-blue">
+    <span class="eyebrow">Margem de servico</span>
+    <div class="kpi-value">{{ company_margin_display }}</div>
+    <div class="kpi-support">Parcela liquida da empresa sobre OS confirmadas.</div>
+  </article>
+  <article class="kpi-card kpi-amber">
+    <span class="eyebrow">Lucro esperado 90d</span>
+    <div class="kpi-value">{{ future_projection[-1].expected_profit_display }}</div>
+    <div class="kpi-support">Travado + pipeline estimado para os proximos 90 dias.</div>
+  </article>
+  <article class="kpi-card kpi-rose">
+    <span class="eyebrow">Conversao historica</span>
+    <div class="kpi-value">{{ historical_close_rate_display }}</div>
+    <div class="kpi-support">Ritmo medio de transformacao do atendimento em ordem.</div>
+  </article>
+  </section>
+
+  <div class="split-layout analysis-split-layout">
+  <section class="stack-grid analysis-main-column">
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">DRE gerencial</span>
+          <h3>Resultado de {{ month_name }}/{{ ano }}</h3>
+          <p>Leitura combinando faturamento de servicos e caixa operacional.</p>
+        </div>
+      </div>
+      <div class="metric-list">
+        <div class="metric-row">
+          <strong>{{ gross_revenue_display }}</strong>
+          <span>Faturamento bruto das OS confirmadas</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ technician_cost_display }}</strong>
+          <span>Repasse tecnico do periodo</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ fee_cost_display }}</strong>
+          <span>Taxas e outros custos diretos</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ company_margin_display }}</strong>
+          <span>Margem liquida de servico da empresa</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ other_revenues_display }}</strong>
+          <span>Outras receitas registradas em caixa</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ operating_expenses_display }}</strong>
+          <span>Despesas operacionais e administrativas</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ operating_profit_display }}</strong>
+          <span>Lucro operacional do periodo</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ margin_rate_display }}</strong>
+          <span>Margem media da empresa nas OS confirmadas</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Orcamento vs realizado</span>
+          <h3>Controle de meta financeira</h3>
+          <p>Cadastre metas por categoria e acompanhe o desvio do resultado real.</p>
+        </div>
+      </div>
+
+      <form method="post" action="{{ url_for('salvar_orcamento') }}" class="quick-form mb-4">
+        <input type="hidden" name="ano" value="{{ ano }}" />
+        <input type="hidden" name="mes" value="{{ mes }}" />
+        <div class="row">
+          <div class="col-md-4">
+            <label for="category">Categoria</label>
+            <input type="text" class="form-control" id="category" name="category" placeholder="Ex.: Publicidade" required />
+          </div>
+          <div class="col-md-3">
+            <label for="planned_revenue">Receita planejada</label>
+            <input type="text" class="form-control" id="planned_revenue" name="planned_revenue" placeholder="0,00" />
+          </div>
+          <div class="col-md-3">
+            <label for="planned_expense">Despesa planejada</label>
+            <input type="text" class="form-control" id="planned_expense" name="planned_expense" placeholder="0,00" />
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-primary w-100" type="submit">Salvar</button>
+          </div>
+        </div>
+        <div>
+          <label for="notes">Observacao</label>
+          <input type="text" class="form-control" id="notes" name="notes" placeholder="Premissa, meta ou observacao da categoria" />
+        </div>
+      </form>
+
+      <div class="data-table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Receita planejada</th>
+              <th>Receita real</th>
+              <th>Despesa planejada</th>
+              <th>Despesa real</th>
+              <th>Resultado planejado</th>
+              <th>Resultado real</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in budget_rows %}
+            <tr>
+              <td>{{ row.category }}</td>
+              <td>{{ row.planned_revenue_display }}</td>
+              <td class="amount-positive">{{ row.realized_revenue_display }}</td>
+              <td>{{ row.planned_expense_display }}</td>
+              <td class="amount-negative">{{ row.realized_expense_display }}</td>
+              <td>{{ row.planned_result_display }}</td>
+              <td class="{% if '-' not in row.realized_result_display %}amount-positive{% else %}amount-negative{% endif %}">
+                {{ row.realized_result_display }}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">Ainda nao ha orcamentos cadastrados para este mes.</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="metric-list mt-3">
+        <div class="metric-row">
+          <strong>{{ budget_totals.planned_result_display }}</strong>
+          <span>Resultado planejado total</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ budget_totals.realized_result_display }}</strong>
+          <span>Resultado realizado total</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Resultado por cidade</span>
+          <h3>Quais unidades mais geram margem</h3>
+        </div>
+      </div>
+      {% if city_rows %}
+      <div class="data-table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Cidade</th>
+              <th>OS</th>
+              <th>Faturamento bruto</th>
+              <th>Margem empresa</th>
+              <th>Repasse tecnico</th>
+              <th>Taxas</th>
+              <th>Margem %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in city_rows %}
+            <tr>
+              <td>{{ row.city }}</td>
+              <td>{{ row.os_count }}</td>
+              <td>{{ row.gross_display }}</td>
+              <td class="amount-positive">{{ row.company_margin_display }}</td>
+              <td>{{ row.technician_cost_display }}</td>
+              <td>{{ row.fees_display }}</td>
+              <td>{{ row.margin_rate_display }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">Nao ha dados confirmados por cidade para este periodo.</div>
+      {% endif %}
+    </article>
+  </section>
+
+  <aside class="stack-grid analysis-side-column">
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Lucro futuro</span>
+          <h3>Previsao de resultado</h3>
+          <p>Combina lucro travado, contas programadas e pipeline esperado.</p>
+        </div>
+      </div>
+      <div class="trend-bars">
+        {% for row in future_projection %}
+        <div class="metric-row">
+          <strong>{{ row.label }}</strong>
+          <span>Travado: {{ row.locked_profit_display }}</span>
+          <span>Pipeline: {{ row.expected_pipeline_profit_display }}</span>
+          <strong class="mt-2 {% if row.expected_profit >= 0 %}amount-positive{% else %}amount-negative{% endif %}">
+            {{ row.expected_profit_display }}
+          </strong>
+        </div>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Pipeline comercial</span>
+          <h3>Base para previsao</h3>
+        </div>
+      </div>
+      <div class="metric-list">
+        <div class="metric-row">
+          <strong>{{ future_attendance_count }}</strong>
+          <span>Atendimentos futuros mapeados</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ future_attendance_gross_display }}</strong>
+          <span>Valor bruto potencial do pipeline</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ historical_close_rate_display }}</strong>
+          <span>Conversao historica estimada</span>
+        </div>
+        <div class="metric-row">
+          <strong>{{ avg_margin_ratio_display }}</strong>
+          <span>Margem historica media da empresa</span>
+        </div>
+      </div>
+      {% if pipeline_rows %}
+      <div class="trend-bars mt-3">
+        {% for row in pipeline_rows %}
+        <div class="metric-row">
+          <strong>{{ row.city }}</strong>
+          <span>{{ row.count }} atendimentos | {{ row.gross_display }}</span>
+          <span>Lucro estimado: {{ row.expected_profit_display }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </article>
+
+    <article class="surface-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Resultado por tecnico</span>
+          <h3>Quem mais sustenta a margem</h3>
+        </div>
+      </div>
+      {% if technician_rows %}
+      <div class="data-table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Tecnico</th>
+              <th>OS</th>
+              <th>Bruto</th>
+              <th>Margem empresa</th>
+              <th>Repasse</th>
+              <th>Margem %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in technician_rows %}
+            <tr>
+              <td>{{ row.tecnico }}</td>
+              <td>{{ row.os_count }}</td>
+              <td>{{ row.gross_display }}</td>
+              <td class="amount-positive">{{ row.company_margin_display }}</td>
+              <td>{{ row.technician_cost_display }}</td>
+              <td>{{ row.margin_rate_display }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">Nao ha dados consolidados por tecnico neste mes.</div>
+      {% endif %}
+    </article>
+  </aside>
+  </div>
+</div>
+{% endblock %}
